@@ -22,6 +22,7 @@ target_link_libraries(mycommon INTERFACE
   demangle
   factory
   gte
+  stdc++fs
   )
 
 target_include_directories(mycommon

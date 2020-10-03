@@ -1,7 +1,8 @@
-add_executable(TelescopeGL_main TelescopeGL_main.cxx)
-target_link_libraries(TelescopeGL_main PRIVATE mycommon altel-gl)
+add_executable(AltelGlExample AltelGlExample.cxx)
+target_link_libraries(AltelGlExample PRIVATE mycommon altel-gl)
+set_target_properties(AltelGlExample PROPERTIES CXX_STANDARD 17)
 
-install(TARGETS TelescopeGL_main
+install(TARGETS AltelGlExample
   EXPORT ${PROJECT_NAME}Targets
   RUNTIME       DESTINATION bin      COMPONENT runtime
   LIBRARY       DESTINATION lib      COMPONENT runtime
