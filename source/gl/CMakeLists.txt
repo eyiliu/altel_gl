@@ -1,10 +1,13 @@
-add_library(altel-gl SHARED src/TelescopeGL.cc src/TelescopeGL_shaders.cc)
+add_subdirectory(galogen)
+add_subdirectory(glsl)
+
+add_library(altel-gl SHARED src/TelescopeGL.cc)
 target_link_libraries(altel-gl
-  PRIVATE GL GLEW glut
+  PRIVATE GL GLEW glut altel-glsl
   PUBLIC sfml-window  sfml-system
   )
 
-set(LIB_PUBLIC_HEADERS include/TelescopeGL.hh  include/TelescopeViewer.hh)
+set(LIB_PUBLIC_HEADERS include/TelescopeGL.hh)
 set_target_properties(altel-gl PROPERTIES PUBLIC_HEADER "${LIB_PUBLIC_HEADERS}")
 
 target_include_directories(altel-gl

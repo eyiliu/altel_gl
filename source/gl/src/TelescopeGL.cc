@@ -4,15 +4,43 @@
 #include <thread>
 #include <iostream>
 
+#include <GLFW/glfw3.h>
+
 #include <SFML/Window.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+const GLchar* TelescopeGL::vertexShaderSrc =
+#include "TelVertex_glsl.hh"
+  ;
+// // Geometry shader
+const GLchar* TelescopeGL::geometryShaderSrc =
+#include "TelGeometry_glsl.hh"
+  ;
+// Fragment shader
+const GLchar* TelescopeGL::fragmentShaderSrc =
+#include "TelFragment_glsl.hh"
+  ;
+////////////////////////
+const GLchar* TelescopeGL::vertexShaderSrc_hit =
+#include "HitVertex_glsl.hh"
+  ;
+const GLchar* TelescopeGL::geometryShaderSrc_hit =
+#include "HitGeometry_glsl.hh"
+  ;
+////////////////////////
+const GLchar* TelescopeGL::vertexShaderSrc_track =
+#include "TrackVertex_glsl.hh"
+  ;
+const GLchar* TelescopeGL::geometryShaderSrc_track =
+#include "TrackGeometry_glsl.hh"
+  ;
 
 GLuint TelescopeGL::createShader(GLenum type, const GLchar* src) {
     GLuint shader = glCreateShader(type);
     glShaderSource(shader, 1, &src, nullptr);
     glCompileShader(shader);
-    
+
     GLint IsCompiled;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &IsCompiled);
     if(IsCompiled == GL_FALSE){
@@ -54,28 +82,28 @@ void TelescopeGL::addTelLayer(float    posx,     float posy,     float posz,
 
 
 TelescopeGL::TelescopeGL(){
-  
+
   m_model = glm::mat4(1.0f);
   // auto t_now = std::chrono::high_resolution_clock::now();
   // float time = std::chrono::duration_cast<std::chrono::duration<float>>(t_now - t_start).count();
   // model = glm::rotate(model,
   //                     0.25f * time * glm::radians(180.0f),
   //                     glm::vec3(0.0f, 0.0f, 1.0f));
-    
+
   m_view = glm::lookAt(glm::vec3(500.0f, 0.0f, 250.0f), // eye
                        glm::vec3(0.0f, 0.0f, 250.0f),   // center
                        glm::vec3(0.0f, 1.0f, 0.0f));   // up vector
-  
+
   m_proj = glm::perspective(glm::radians(22.0f), m_win_width/m_win_high, 0.1f, 500.0f);
-  
+
   initializeGL();
 }
 
 
 void TelescopeGL::lookAt(float cameraX, float cameraY, float cameraZ,
                          float centerX, float centerY, float centerZ,
-                         float upvectX, float upvectY, float upvectZ){ // model cord 
-  
+                         float upvectX, float upvectY, float upvectZ){ // model cord
+
   m_view = glm::lookAt(glm::vec3(cameraX, cameraY, cameraZ),    // eye position
                        glm::vec3(centerX, centerY, centerZ),    // object center
                        glm::vec3(upvectX, upvectY, upvectZ));   // up vector
@@ -85,7 +113,7 @@ void TelescopeGL::perspective(float fovHoriz, float nearDist, float farDist){ //
   m_proj = glm::perspective(glm::radians(fovHoriz), m_win_width/m_win_high, nearDist, farDist);
 }
 
-void TelescopeGL::initializeGL(){ 
+void TelescopeGL::initializeGL(){
   sf::ContextSettings settings;
   settings.depthBits = 24;
   settings.stencilBits = 8;
@@ -96,7 +124,7 @@ void TelescopeGL::initializeGL(){
                                           "TelescopeGL", sf::Style::Titlebar | sf::Style::Close, settings);
   //glutInit(&argc, argv);
   //glutCreateWindow("GLEW Test");
-  
+
   glewExperimental = GL_TRUE;
   GLenum glew_return = glewInit();
   if (glew_return != GLEW_OK){
@@ -106,7 +134,7 @@ void TelescopeGL::initializeGL(){
 }
 
 TelescopeGL::~TelescopeGL(){
-  terminateGL();  
+  terminateGL();
 }
 
 void TelescopeGL::buildProgramTel(){
