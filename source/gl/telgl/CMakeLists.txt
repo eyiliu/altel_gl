@@ -1,17 +1,13 @@
-add_subdirectory(galogen)
-add_subdirectory(glsl)
-add_subdirectory(telgl)
-
-add_library(altel-gl SHARED src/TelescopeGL.cc)
-target_link_libraries(altel-gl
-  PRIVATE GL GLEW glut altel-glsl
-  PUBLIC sfml-window  sfml-system
+add_library(altel-telgl SHARED src/TelGL.cc)
+target_link_libraries(altel-telgl
+  PUBLIC GL galogen
+  PRIVATE altel-glsl mycommon
   )
 
-set(LIB_PUBLIC_HEADERS include/TelescopeGL.hh)
-set_target_properties(altel-gl PROPERTIES PUBLIC_HEADER "${LIB_PUBLIC_HEADERS}")
+set(LIB_PUBLIC_HEADERS include/TelGL.hh)
+set_target_properties(altel-telgl PROPERTIES PUBLIC_HEADER "${LIB_PUBLIC_HEADERS}")
 
-target_include_directories(altel-gl
+target_include_directories(altel-telgl
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
@@ -19,7 +15,7 @@ target_include_directories(altel-gl
   $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
   )
 
-install(TARGETS altel-gl
+install(TARGETS altel-telgl
   EXPORT ${PROJECT_NAME}Targets
   RUNTIME       DESTINATION bin      COMPONENT runtime
   LIBRARY       DESTINATION lib      COMPONENT runtime
@@ -27,5 +23,3 @@ install(TARGETS altel-gl
   PUBLIC_HEADER DESTINATION include  COMPONENT devel
   RESOURCE      DESTINATION resource COMPONENT runtime
   )
-
-add_subdirectory(exe)
