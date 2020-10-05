@@ -32,8 +32,8 @@ namespace {
       glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
       std::vector<GLchar> infoLog(maxLength, 0);
       glGetShaderInfoLog(shader, maxLength, &maxLength, infoLog.data());
-      std::fprintf(stderr, "ERROR is caucht at compile time of opengl GLSL.\n%s", infoLog.data());
-      std::fprintf(stderr, "==========problematic GLSL code below=======\n%s\n==========end of GLSL code===========\n", src);
+      std::fprintf(stderr, "ERROR is catched at compile time of opengl GLSL.\n%s", infoLog.data());
+      std::fprintf(stderr, "======problematic GLSL code below=====\n%s\n=====end of GLSL code====\n", src);
       throw;
     }
     return shader;
@@ -128,14 +128,16 @@ TelGL::TelGL(const std::string& geo_js_string,
   glGenBuffers(1, &m_vbuffer_id);
   glBindBuffer(GL_ARRAY_BUFFER, m_vbuffer_id);
   // create store len 20, but data is not yet prepared, therefore a NULL pointer says no copy;
-  glNamedBufferData(m_vbuffer_id, sizeof(GLint)*MAX_ID_SIZE, m_data_id, GL_STATIC_DRAW);
+  glNamedBufferData(m_vbuffer_id, sizeof(GLint)*6, NULL, GL_STATIC_DRAW);
   m_location_id = glGetAttribLocation(m_program, "l");
   glEnableVertexAttribArray(m_location_id);
   glVertexAttribIPointer(m_location_id, 1, GL_INT, sizeof(GLint), 0);
 
-  for(GLint n = 0; n<MAX_ID_SIZE; n++ ){
+  for(GLint n = 0; n<6; n++ ){
     char block_name[128];
     std::snprintf(block_name, sizeof(block_name), "UniformLayer[%i]", n);
+
+    // location_block = glGetUniformLocation(m_program, block_name);
 
     // assign a bind pointer from glsl program
     GLint bind_pointer = n;
@@ -143,14 +145,12 @@ TelGL::TelGL(const std::string& geo_js_string,
     glUniformBlockBinding(m_program, block_index, bind_pointer);
 
     // create buffer object
-    glGenBuffers(1, m_ubuffer_geodata);
+    glGenBuffers(1, &m_ubuffer_geodata[n]);
     glBindBuffer(GL_UNIFORM_BUFFER, m_ubuffer_geodata[n]);
     glNamedBufferData(m_ubuffer_geodata[n],  sizeof(TelGL::GeoDataGL), NULL, GL_STATIC_DRAW);
 
-    // set
-    glBindBuffer(GL_UNIFORM_BUFFER, 0); //reset bind, need?
+    // connect bind_pointer to buffer, set data
     glBindBufferRange(GL_UNIFORM_BUFFER, bind_pointer, m_ubuffer_geodata[n], 0, sizeof(TelGL::GeoDataGL));
-    glBindBuffer(GL_UNIFORM_BUFFER, m_ubuffer_geodata[n]);
     glNamedBufferSubData(m_ubuffer_geodata[n], 0, sizeof(TelGL::GeoDataGL), &m_data_geodata[n]);
   }
 
@@ -191,6 +191,6 @@ TelGL::~TelGL(){
 void TelGL::draw(){
   glUseProgram(m_program);
   glBindVertexArray(m_vertex_array_object);
-  glNamedBufferData(m_vbuffer_id, sizeof(GLint)*6, m_data_id, GL_STATIC_DRAW);
+  glNamedBufferSubData(m_vbuffer_id, 0, sizeof(GLint)*6, m_data_id);
   glDrawArrays(GL_POINTS, 0, 6);
 }

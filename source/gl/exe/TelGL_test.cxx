@@ -159,10 +159,10 @@ int main(int argc, char **argv){
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    telgl.lookAt(500.0f, 0.0f, 250.0f,
-                 0.0f, 0.0f, 100.0f,
+    telgl.lookAt(0.0f, 800.0f, 400.0f,
+                 0.0f, 0.0f, 0.0f,
                  0.0f, 1.0f, 0.0f,
-                 22.0f, 0.1f, 500.0f,
+                 40.0f, 0.1f, 2000.0f,
                  ratio);
     telgl.draw();
     glfwSwapBuffers(window);
