@@ -10,6 +10,7 @@
   class TelGL{
   public:
     struct GeoDataGL{
+      GLint   id[4]  {0,0,0,0}; //int, pad
       GLfloat pos[4]  {0,0,0,0}; //vec3, pad
       GLfloat color[4]{0,1,0,0}; //vec3, pad
       GLfloat pitch[4]{0.028, 0.026, 1, 0}; //pitch x,y, thick z, pad
@@ -59,6 +60,7 @@
                 float ratioWidthHigh
                 );
     void draw();
+    void draw(int layer);
   };
 
 // }

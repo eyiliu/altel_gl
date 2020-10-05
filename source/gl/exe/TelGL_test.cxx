@@ -160,7 +160,6 @@ int main(int argc, char **argv){
                              });
 
   /////////////////////////////////////////////
-
   std::string geometry_js_string = LoadFileToString(geometry_path);
   TelGL telgl(geometry_js_string,"","","");
 

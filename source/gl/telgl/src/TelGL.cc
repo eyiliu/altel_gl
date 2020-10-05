@@ -83,6 +83,7 @@ TelGL::TelGL(const std::string& geo_js_string,
       colorB = l["colorRGB"][2].GetDouble();
     }
     m_data_id[n] = id; //
+    m_data_geodata[n].id[0] = id;
     m_data_geodata[n].pos[0]=  cx;
     m_data_geodata[n].pos[1]=  cy;
     m_data_geodata[n].pos[2]=  cz;
@@ -190,6 +191,13 @@ TelGL::~TelGL(){
   //   if(m_uboLayers[i]){glDeleteBuffers(1, &m_uboLayers[i]); m_uboLayers[i] = 0;}
 }
 
+void TelGL::draw(int layer){
+  GLint id = layer;
+  glUseProgram(m_program);
+  glBindVertexArray(m_vertex_array_object);
+  glNamedBufferSubData(m_vbuffer_id, 0, sizeof(GLint)*1, &id);
+  glDrawArrays(GL_POINTS, 0, 1);
+}
 
 void TelGL::draw(){
   glUseProgram(m_program);

@@ -4,6 +4,7 @@ layout(points) in;
 layout(line_strip, max_vertices = 16) out;
 
 layout (std140) struct GeoDataLayer{
+  ivec4 id; // id, rev , rev, rev
   vec4  position; //
   vec4  color;    //
   vec4  pitch;    // pitch_x pitch_y pitch_z/thick_z
@@ -28,16 +29,16 @@ void main(){
   vec3   pitch;
   uvec3  npixel;
   mat4   trans;
-  int   id;
-  
-  // for (int k = 0; k < 100; ++k){
-  //   if(nl[0]==k){
-  //     id = k;
-  //   }
-  // }
+  int    n;
 
   for (int k = 0; k < 8; ++k){
-    if(nl[0]==k){
+    if(nl[0] == geoData.ly[k].id.x ){
+      n = k;
+    }
+  }
+
+  for (int k = 0; k < 8; ++k){
+    if(n ==k){
       pos    = geoData.ly[k].position.xyz;
       color  = geoData.ly[k].color.xyz;
       pitch  = geoData.ly[k].pitch.xyz;
