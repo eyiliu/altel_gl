@@ -40,10 +40,62 @@ std::string LoadFileToString(const std::string& path){
 }
 
 
+const unsigned int SCR_WIDTH = 800;
+const unsigned int SCR_HEIGHT = 600;
+float deltaTime = 0.0f; // time between current frame and last frame
+float lastFrame = 0.0f;
+glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  400.0f);
+glm::vec3 worldCenter = glm::vec3(0.0f, 0.0f,  0.0f);
+glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
+
+void processInput(GLFWwindow *window)
+{
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+      glfwSetWindowShouldClose(window, true);
+
+    float cameraSpeed = 0.1 * deltaTime;
+    float cameraSpeedAD = 2 * deltaTime;
+
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+      cameraPos -= cameraSpeed * (cameraPos - worldCenter);
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+      cameraPos += cameraSpeed * (cameraPos - worldCenter);
+
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+      cameraPos -= glm::cross((cameraPos - worldCenter), glm::vec3(0.0f, 1.0f,  0.0f)) * cameraSpeedAD;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+      cameraPos += glm::cross((cameraPos - worldCenter), glm::vec3(0.0f, 1.0f,  0.0f)) * cameraSpeedAD;
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+      cameraPos -= glm::cross((cameraPos - worldCenter), glm::vec3(1.0f, 0.0f,  0.0f))  * cameraSpeedAD;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+      cameraPos += glm::cross((cameraPos - worldCenter), glm::vec3(1.0f, 0.0f,  0.0f)) * cameraSpeedAD;
+
+}
+
+
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
+      glfwSetWindowShouldClose(window, GLFW_TRUE);
+
+    float cameraSpeed = 0.1 * deltaTime;
+    float cameraSpeedAD = 2 * deltaTime;
+
+    if (key == GLFW_KEY_Q && action != GLFW_RELEASE)
+      cameraPos -= cameraSpeed * (cameraPos - worldCenter);
+    if (key == GLFW_KEY_E && action != GLFW_RELEASE)
+      cameraPos += cameraSpeed * (cameraPos - worldCenter);
+
+    if (key == GLFW_KEY_A && action != GLFW_RELEASE)
+      cameraPos -= glm::cross((cameraPos - worldCenter), glm::vec3(0.0f, 1.0f,  0.0f)) * cameraSpeedAD;
+    if (key == GLFW_KEY_D && action != GLFW_RELEASE)
+      cameraPos += glm::cross((cameraPos - worldCenter), glm::vec3(0.0f, 1.0f,  0.0f)) * cameraSpeedAD;
+
+    if (key == GLFW_KEY_W && action != GLFW_RELEASE)
+      cameraPos -= glm::cross((cameraPos - worldCenter), glm::vec3(1.0f, 0.0f,  0.0f))  * cameraSpeedAD;
+    if (key == GLFW_KEY_S && action != GLFW_RELEASE)
+      cameraPos += glm::cross((cameraPos - worldCenter), glm::vec3(1.0f, 0.0f,  0.0f)) * cameraSpeedAD;
 }
 
 
@@ -152,18 +204,25 @@ int main(int argc, char **argv){
 
   while (!glfwWindowShouldClose(window))
   {
+
+    float currentFrame = glfwGetTime();
+    deltaTime = currentFrame - lastFrame;
+    lastFrame = currentFrame;
+    // processInput(window);
+
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
     const float ratio = width / (float) height;
     glViewport(0, 0, width, height);
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    telgl.lookAt(0.0f, 800.0f, 400.0f,
-                 0.0f, 0.0f, 0.0f,
-                 0.0f, 1.0f, 0.0f,
-                 40.0f, 0.1f, 2000.0f,
+    telgl.lookAt(cameraPos[0], cameraPos[1], cameraPos[2],
+                 worldCenter[0], worldCenter[1], worldCenter[2],
+                 cameraUp[0], cameraUp[1], cameraUp[2],
+                 60.0f, 0.1f, 2000.0f,
                  ratio);
+
     telgl.draw();
     glfwSwapBuffers(window);
     glfwPollEvents();

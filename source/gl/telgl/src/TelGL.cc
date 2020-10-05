@@ -71,14 +71,25 @@ TelGL::TelGL(const std::string& geo_js_string,
     double hy = l["halfY"].GetDouble();
     double hz = l["halfZ"].GetDouble();
 
+    double colorR = 0;
+    double colorG = 0;
+    double colorB = 1;
+
+    if(l.HasMember("colorRGB") &&
+       l["colorRGB"].IsArray() &&
+       l["colorRGB"].Size() == 3){
+      colorR = l["colorRGB"][0].GetDouble();
+      colorG = l["colorRGB"][1].GetDouble();
+      colorB = l["colorRGB"][2].GetDouble();
+    }
     m_data_id[n] = id; //
     m_data_geodata[n].pos[0]=  cx;
     m_data_geodata[n].pos[1]=  cy;
     m_data_geodata[n].pos[2]=  cz;
     m_data_geodata[n].pos[3]=  0;
-    m_data_geodata[n].color[0]= 0.5;
-    m_data_geodata[n].color[1]= 0.5;
-    m_data_geodata[n].color[2]= 0.5;
+    m_data_geodata[n].color[0]= colorR;
+    m_data_geodata[n].color[1]= colorG;
+    m_data_geodata[n].color[2]= colorB;
     m_data_geodata[n].color[3]= 0;
     m_data_geodata[n].pitch[0]= hx*2/pxn;
     m_data_geodata[n].pitch[1]= hy*2/pyn;
