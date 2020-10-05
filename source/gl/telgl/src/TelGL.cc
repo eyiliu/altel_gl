@@ -125,7 +125,6 @@ TelGL::TelGL(const std::string& geo_js_string,
     m_shader_fragment = createShader(GL_FRAGMENT_SHADER, default_fragment_glsl);
   }
 
-
   m_program = glCreateProgram();
   glAttachShader(m_program, m_shader_vertex);
   glAttachShader(m_program, m_shader_geometry);
@@ -144,26 +143,18 @@ TelGL::TelGL(const std::string& geo_js_string,
   glEnableVertexAttribArray(m_location_id);
   glVertexAttribIPointer(m_location_id, 1, GL_INT, sizeof(GLint), 0);
 
-  for(GLint n = 0; n<6; n++ ){
-    char block_name[128];
-    std::snprintf(block_name, sizeof(block_name), "UniformLayer[%i]", n);
+  GLint bind_pointer = 0;
+  GLint block_index = glGetUniformBlockIndex(m_program, "GeoData");
+  glUniformBlockBinding(m_program, block_index, bind_pointer);
 
-    // location_block = glGetUniformLocation(m_program, block_name);
+  // create buffer object
+  glGenBuffers(1, &m_ubuffer_geodata_x);
+  glBindBuffer(GL_UNIFORM_BUFFER, m_ubuffer_geodata_x);
+  glNamedBufferData(m_ubuffer_geodata_x,  sizeof(TelGL::GeoDataGL)*8, NULL, GL_STATIC_DRAW);
 
-    // assign a bind pointer from glsl program
-    GLint bind_pointer = n;
-    GLint block_index = glGetUniformBlockIndex(m_program, block_name);
-    glUniformBlockBinding(m_program, block_index, bind_pointer);
-
-    // create buffer object
-    glGenBuffers(1, &m_ubuffer_geodata[n]);
-    glBindBuffer(GL_UNIFORM_BUFFER, m_ubuffer_geodata[n]);
-    glNamedBufferData(m_ubuffer_geodata[n],  sizeof(TelGL::GeoDataGL), NULL, GL_STATIC_DRAW);
-
-    // connect bind_pointer to buffer, set data
-    glBindBufferRange(GL_UNIFORM_BUFFER, bind_pointer, m_ubuffer_geodata[n], 0, sizeof(TelGL::GeoDataGL));
-    glNamedBufferSubData(m_ubuffer_geodata[n], 0, sizeof(TelGL::GeoDataGL), &m_data_geodata[n]);
-  }
+  // connect bind_pointer to buffer, set data
+  glBindBufferRange(GL_UNIFORM_BUFFER, bind_pointer, m_ubuffer_geodata_x, 0, sizeof(TelGL::GeoDataGL)*8);
+  glNamedBufferSubData(m_ubuffer_geodata_x, 0, sizeof(TelGL::GeoDataGL)*8, &m_data_geodata[0]);
 
   m_location_model = glGetUniformLocation(m_program, "model");
   m_location_view = glGetUniformLocation(m_program, "view");
@@ -198,6 +189,7 @@ TelGL::~TelGL(){
   // for(int i=0; i<m_points.size(); i++)
   //   if(m_uboLayers[i]){glDeleteBuffers(1, &m_uboLayers[i]); m_uboLayers[i] = 0;}
 }
+
 
 void TelGL::draw(){
   glUseProgram(m_program);

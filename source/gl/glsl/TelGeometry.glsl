@@ -3,13 +3,17 @@
 layout(points) in;
 layout(line_strip, max_vertices = 16) out;
 
-layout (std140) uniform UniformLayer{
-  vec3  position; //
-  vec3  color;    //
-  vec3  pitch;    // pitch_x pitch_y pitch_z/thick_z
-  uvec3 npixel;   // pixel_x pixel_y pixel_z/always1
+layout (std140) struct GeoDataLayer{
+  vec4  position; //
+  vec4  color;    //
+  vec4  pitch;    // pitch_x pitch_y pitch_z/thick_z
+  uvec4 npixel;   // pixel_x pixel_y pixel_z/always1
   mat4  trans;    //
-} layers[10];
+};
+
+layout (std140) uniform GeoData{
+  GeoDataLayer  ly[8]; //
+} geoData;
 
 in int nl[];
 out vec3 fColor;
@@ -24,14 +28,21 @@ void main(){
   vec3   pitch;
   uvec3  npixel;
   mat4   trans;
+  int   id;
+  
+  // for (int k = 0; k < 100; ++k){
+  //   if(nl[0]==k){
+  //     id = k;
+  //   }
+  // }
 
   for (int k = 0; k < 8; ++k){
     if(nl[0]==k){
-      pos    = layers[k].position;
-      color  = layers[k].color;
-      pitch  = layers[k].pitch;
-      npixel = layers[k].npixel;
-      trans  = layers[k].trans;
+      pos    = geoData.ly[k].position.xyz;
+      color  = geoData.ly[k].color.xyz;
+      pitch  = geoData.ly[k].pitch.xyz;
+      npixel = geoData.ly[k].npixel.xyz;
+      trans  = geoData.ly[k].trans;
     }
   }
   fColor = color;

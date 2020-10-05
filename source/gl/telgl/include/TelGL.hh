@@ -40,6 +40,7 @@
     GLint m_location_proj{0};
     glm::mat4 m_data_proj;
 
+    GLuint m_ubuffer_geodata_x;
     GLuint m_ubuffer_geodata[MAX_ID_SIZE];
     GeoDataGL m_data_geodata[MAX_ID_SIZE];
 
