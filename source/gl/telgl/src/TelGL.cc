@@ -1,3 +1,4 @@
+
 #include "myrapidjson.h"
 #include <rapidjson/document.h>
 #include <rapidjson/istreamwrapper.h>
@@ -123,14 +124,12 @@ TelGL::TelGL(const std::string& geo_js_string,
   //// assign buffer as a vbuffer in a vertex array object
   glBindVertexArray(m_vertex_array_localhit);   // bind vao to GL_ARRAY_BUFFER
   glBindBuffer(GL_ARRAY_BUFFER, m_vbuffer_localhit_pos);// bind vbo to GL_ARRAY_BUFFER
-  //assign storage to buffer object
-  ////////>>>>>>>>>> TODO, max 1000 hits
-  glNamedBufferData(m_vbuffer_localhit_pos, sizeof(GLint)*3*1000, NULL, GL_STATIC_DRAW);
+  //assign storage to buffer object, MAX 1024 localhits
+  glNamedBufferData(m_vbuffer_localhit_pos, sizeof(GLint)*3*1024, NULL, GL_STATIC_DRAW);
 
   ////// program
   //// shader and variables
   // create program
-  ///////>>>>>>>>>>>> add glsl
   m_shader_vertex_localhit   = createShader(GL_VERTEX_SHADER,   default_vertex_glsl_localhit);
   m_shader_geometry_localhit = createShader(GL_GEOMETRY_SHADER, default_geometry_glsl_localhit);
   m_shader_fragment_localhit = createShader(GL_FRAGMENT_SHADER, default_fragment_glsl_localhit);
@@ -143,7 +142,7 @@ TelGL::TelGL(const std::string& geo_js_string,
   m_blockindex_geo_localhit = glGetUniformBlockIndex(m_program_localhit, "GeoData");
   m_blockindex_transform_localhit = glGetUniformBlockIndex(m_program_localhit, "TransformData");
   m_location_localhit_pos = glGetAttribLocation(m_program_localhit, "pos");
-  glVertexAttribIPointer(m_location_localhit_pos, 3, GL_INT, sizeof(GLint), 0);
+  glVertexAttribIPointer(m_location_localhit_pos, 3, GL_INT, sizeof(GLint)*3, 0);
   // connect attributes to buffer
   //// connect uniform block to bind point (ubuffer)
   glUniformBlockBinding(m_program_localhit, m_blockindex_geo_localhit, m_bindpoint_geo);
@@ -173,7 +172,6 @@ TelGL::~TelGL(){
   if(m_vertex_array_localhit){glDeleteVertexArrays(1, &m_vertex_array_localhit); m_vertex_array_localhit = 0;}
   if(m_vbuffer_localhit_pos){glDeleteBuffers(1, &m_vbuffer_localhit_pos); m_vbuffer_localhit_pos = 0;}
   //
-
   // ubuffer
 }
 
@@ -257,8 +255,7 @@ void TelGL::updateGeometry(const std::string & geo_js_string){
     }
   }
   m_counter_geo = n;
-  // glBindBufferRange(GL_UNIFORM_BUFFER, bind_point, m_ubuffer_geo, 0, sizeof(m_data_geo));
-  // glUseProgram(m_program);
+
   glNamedBufferSubData(m_ubuffer_geo, 0, sizeof(TelGL::GeoDataGL)*m_counter_geo, &m_data_geo[0]);
   std::fprintf(stdout, "set up geometry data with %i layers\n", m_counter_geo);
 }
@@ -272,15 +269,16 @@ void TelGL::draw(int layer){
 }
 
 void TelGL::draw(){
+  // GLint pos[12] = {0, 0, 12, 0, 0, 7, 0, 0, 14, 0, 0, 15};
+  GLint pos[12] = {100, 200, 0, 1000, 200, 1, 300, 200, 2, 700, 200, 3};
+
+  glUseProgram(m_program_localhit);
+  glBindVertexArray(m_vertex_array_localhit);
+  glNamedBufferSubData(m_vbuffer_localhit_pos, 0, sizeof(GLint)*12, pos);
+  glDrawArrays(GL_POINTS, 0, 4);
+
   glUseProgram(m_program_tel);
   glBindVertexArray(m_vertex_array_tel);
   glNamedBufferSubData(m_vbuffer_tel_id, 0, sizeof(GLint)*m_counter_geo, m_data_tel_id);
   glDrawArrays(GL_POINTS, 0, m_counter_geo);
-
-  GLint pos[3] = {200, 200, 7};
-  glUseProgram(m_program_localhit);
-  glBindVertexArray(m_vertex_array_localhit);
-  glNamedBufferSubData(m_vbuffer_localhit_pos, 0, sizeof(GLint)*3, pos);
-  glDrawArrays(GL_POINTS, 0, 1);
-
 }

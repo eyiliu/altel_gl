@@ -40,6 +40,7 @@ void main(){
   for (int k = 0; k < 20; ++k){
     if(nl[0] == geoData.ly[k].id.x ){
       n = k;
+      break;
     }
   }
   if(n == -1){
@@ -53,6 +54,7 @@ void main(){
       pitch  = geoData.ly[k].pitch.xyz;
       npixel = geoData.ly[k].npixel.xyz;
       trans  = geoData.ly[k].trans;
+      break;
     }
   }
   fColor = color;

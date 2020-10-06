@@ -41,6 +41,7 @@ void main(){
   for (int k = 0; k < 20; ++k){
     if(nlx == geoData.ly[k].id.x ){
       n = k;
+      break;
     }
   }
   if(n == -1){
@@ -55,17 +56,18 @@ void main(){
       pitch  = geoData.ly[k].pitch.xyz;
       npixel = geoData.ly[k].npixel.xyz;
       trans  = geoData.ly[k].trans;
+      break;
     }
   }
 
-  vec3 pos_hit = pos.xyz-thick.xyz + vec3( pitch.xy * gl_in[0].gl_Position.xy, 0);
+  vec3 pos_hit = pos.xyz - (pitch.xyz*npixel.xyz /2) + vec3( pitch.xy * gl_in[0].gl_Position.xy, 0);
   //fColor = vColor[0];
   fColor = color;
 
   mat4 pvmMatrix = transformData.projx * transformData.viewx * transformData.modelx * trans;
 
   vec4 gp = pvmMatrix * vec4(pos_hit, 1.0);
-  vec4 offset = pvmMatrix * vec4( 0.0,  0.0,  1.0, 0.0);
+  vec4 offset = pvmMatrix * vec4( 0.0,  0.0,  8.0, 0.0);
 
   gl_Position = gp + offset;
   EmitVertex();
