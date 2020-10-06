@@ -54,6 +54,22 @@
     GLuint m_vertex_array_tel{0};
     GLuint m_vbuffer_tel_id{0};
     GLint m_data_tel_id[MAX_ID_SIZE];
+    ////
+
+    ////program telescope
+    //shader
+    GLuint m_shader_vertex_localhit{0};
+    GLuint m_shader_geometry_localhit{0};
+    GLuint m_shader_fragment_localhit{0};
+    GLuint m_program_localhit{0};
+    GLuint m_blockindex_geo_localhit{0};
+    GLuint m_blockindex_transform_localhit{0};
+    GLint m_location_localhit_pos{0};
+    //vbuffer
+    GLuint m_vertex_array_localhit{0};
+    GLuint m_vbuffer_localhit_pos{0};
+    GLint m_data_localhit_pos[MAX_ID_SIZE];
+    ////
 
     TelGL(const std::string& geo_js_string,
           const std::string& vertex_glsl,
