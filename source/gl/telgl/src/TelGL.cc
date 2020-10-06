@@ -65,42 +65,38 @@ TelGL::TelGL(const std::string& geo_js_string,
     m_shader_fragment = createShader(GL_FRAGMENT_SHADER, default_fragment_glsl);
   }
 
+  //// create buffer object
+  glGenBuffers(1, &m_vbuffer_id);
+  glBindBuffer(GL_ARRAY_BUFFER, m_vbuffer_id);
+  // assign storage to buffer object
+  glNamedBufferData(m_vbuffer_id, sizeof(m_data_id), NULL, GL_STATIC_DRAW);
+
+  //// create buffer object
+  glGenBuffers(1, &m_ubuffer_geodata);
+  glBindBuffer(GL_UNIFORM_BUFFER, m_ubuffer_geodata);
+  // assign storage to buffer object
+  glNamedBufferData(m_ubuffer_geodata, sizeof(m_data_geodata), NULL, GL_STATIC_DRAW);
+  // assign a bind point to buffer object (and specify the data storage range)
+  m_bindpoint_geodata = 0;
+  glBindBufferRange(GL_UNIFORM_BUFFER, m_bindpoint_geodata, m_ubuffer_geodata, 0, sizeof(m_data_geodata));
+
+  /////// tel program
   m_program = glCreateProgram();
   glAttachShader(m_program, m_shader_vertex);
   glAttachShader(m_program, m_shader_geometry);
   glAttachShader(m_program, m_shader_fragment);
   glLinkProgram(m_program);
-  glUseProgram(m_program);
 
-
-
-  glGenBuffers(1, &m_vbuffer_id);
-  glBindBuffer(GL_ARRAY_BUFFER, m_vbuffer_id);
-  // assign storage to buffer object
-  glNamedBufferData(m_vbuffer_id, sizeof(GLint)*6, NULL, GL_STATIC_DRAW);
-
-
-  m_location_id = glGetAttribLocation(m_program, "l");
-
+  //// create vertex array object and connect shader program variable to it
   glGenVertexArrays(1, &m_vertex_array_object);
   glBindVertexArray(m_vertex_array_object);
+  m_location_id = glGetAttribLocation(m_program, "l");
   glEnableVertexAttribArray(m_location_id);
   glVertexAttribIPointer(m_location_id, 1, GL_INT, sizeof(GLint), 0);
 
-  // create buffer object
-  glGenBuffers(1, &m_ubuffer_geodata);
-  glBindBuffer(GL_UNIFORM_BUFFER, m_ubuffer_geodata);
-  // assign storage to buffer object
-  glNamedBufferData(m_ubuffer_geodata, sizeof(m_data_geodata), NULL, GL_STATIC_DRAW);
-
-  // assign a bind point to buffer object (and specify the data storage range)
-  m_bindpoint_geodata = 0;
-  glBindBufferRange(GL_UNIFORM_BUFFER, m_bindpoint_geodata, m_ubuffer_geodata, 0, sizeof(m_data_geodata));
-
-  // connect bind_point to buffer, set data
+  //// connect shader progream varible to a bind point of an ubuffer
   m_blockindex_geodata = glGetUniformBlockIndex(m_program, "GeoData");
   glUniformBlockBinding(m_program, m_blockindex_geodata, m_bindpoint_geodata);
-  // glNamedBufferSubData(m_ubuffer_geodata, 0, sizeof(TelGL::GeoDataGL)*8, &m_data_geodata[0]);
 
   m_location_model = glGetUniformLocation(m_program, "model");
   m_location_view = glGetUniformLocation(m_program, "view");
@@ -203,9 +199,11 @@ void TelGL::updateGeoData(const std::string & geo_js_string){
       break;
     }
   }
-
+  m_counter_geodata = n;
   // glBindBufferRange(GL_UNIFORM_BUFFER, bind_point, m_ubuffer_geodata, 0, sizeof(m_data_geodata));
-  glNamedBufferSubData(m_ubuffer_geodata, 0, sizeof(TelGL::GeoDataGL)*n, &m_data_geodata[0]);
+  // glUseProgram(m_program);
+  glNamedBufferSubData(m_ubuffer_geodata, 0, sizeof(TelGL::GeoDataGL)*m_counter_geodata, &m_data_geodata[0]);
+  std::fprintf(stdout, "set up geometry data with %i layers\n", m_counter_geodata);
 }
 
 void TelGL::draw(int layer){
@@ -219,6 +217,6 @@ void TelGL::draw(int layer){
 void TelGL::draw(){
   glUseProgram(m_program);
   glBindVertexArray(m_vertex_array_object);
-  glNamedBufferSubData(m_vbuffer_id, 0, sizeof(GLint)*6, m_data_id);
-  glDrawArrays(GL_POINTS, 0, 6);
+  glNamedBufferSubData(m_vbuffer_id, 0, sizeof(GLint)*m_counter_geodata, m_data_id);
+  glDrawArrays(GL_POINTS, 0, m_counter_geodata);
 }
