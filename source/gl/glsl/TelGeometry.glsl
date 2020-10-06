@@ -5,7 +5,7 @@ layout(line_strip, max_vertices = 16) out;
 
 layout (std140) struct GeoDataLayer{
   ivec4 id; // id, rev , rev, rev
-  vec4  position; // vec3, pad
+  vec4  pos; // vec3, pad
   vec4  size;     // size_x, size_y, size_z, pad
   vec4  color;    // vec3, pad
   vec4  pitch;    // pitch_x pitch_y pitch_z/thick_z
@@ -18,9 +18,9 @@ layout (std140) uniform GeoData{
 } geoData;
 
 layout (std140) uniform TransformData{
-  mat4 modelx;
-  mat4 viewx;
-  mat4 projx;
+  mat4 model;
+  mat4 view;
+  mat4 proj;
 } transformData;
 
 
@@ -48,7 +48,7 @@ void main(){
   }
   for (int k = 0; k < 20; ++k){
     if(n ==k){
-      pos    = geoData.ly[k].position.xyz;
+      pos    = geoData.ly[k].pos.xyz;
       thick  = geoData.ly[k].size.xyz;
       color  = geoData.ly[k].color.xyz;
       pitch  = geoData.ly[k].pitch.xyz;
@@ -59,7 +59,7 @@ void main(){
   }
   fColor = color;
 
-  mat4 pvmMatrix = transformData.projx * transformData.viewx * transformData.modelx * trans;
+  mat4 pvmMatrix = transformData.proj * transformData.view * transformData.model * trans;
 
   vec4 gp = pvmMatrix * vec4(pos, 1.0);
 
