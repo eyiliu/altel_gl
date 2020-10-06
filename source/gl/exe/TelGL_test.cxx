@@ -171,11 +171,11 @@ int main(int argc, char **argv){
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    telgl.lookAt(cameraPos[0],   cameraPos[1],   cameraPos[2],
-                 worldCenter[0], worldCenter[1], worldCenter[2],
-                 cameraUp[0],    cameraUp[1],    cameraUp[2],
-                 60.0f,          0.1f,           2000.0f,
-                 sWinWidth / sWinHeight);
+    telgl.updateTransform(cameraPos[0],   cameraPos[1],   cameraPos[2],
+                          worldCenter[0], worldCenter[1], worldCenter[2],
+                          cameraUp[0],    cameraUp[1],    cameraUp[2],
+                          60.0f,          0.1f,           2000.0f,
+                          sWinWidth / sWinHeight);
 
     telgl.draw();
     glfwSwapBuffers(window);

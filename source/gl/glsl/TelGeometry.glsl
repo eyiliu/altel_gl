@@ -17,12 +17,15 @@ layout (std140) uniform GeoData{
   GeoDataLayer  ly[20]; //
 } geoData;
 
+layout (std140) uniform TransformData{
+  mat4 modelx;
+  mat4 viewx;
+  mat4 projx;
+} transformData;
+
+
 in int nl[];
 out vec3 fColor;
-
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 proj;
 
 void main(){
   vec3   pos;
@@ -54,11 +57,11 @@ void main(){
   }
   fColor = color;
 
-  mat4 pvmMatrix = proj * view * model * trans;
+  mat4 pvmMatrix = transformData.projx * transformData.viewx * transformData.modelx * trans;
+
   vec4 gp = pvmMatrix * vec4(pos, 1.0);
 
   vec3 halfThick = thick/2.0;
-  //vec3 thick  = pitch.xyz * npixel.xyz;
   //                                     N/S       U/D       E/W
   //                                     X         Y         Z
   vec4 NEU = pvmMatrix * vec4(  halfThick.x,  halfThick.y,  halfThick.z, 0.0);

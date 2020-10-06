@@ -21,35 +21,39 @@
           0, 0, 1, 0,
           0, 0, 0, 1 }; //mat4
     };
+
+    struct TransformDataGL{
+      glm::mat4 model;
+      glm::mat4 view;
+      glm::mat4 proj;
+    };
+
     constexpr static GLuint MAX_ID_SIZE{20};
 
-    GLuint m_shader_vertex{0};
-    GLuint m_shader_geometry{0};
-    GLuint m_shader_fragment{0};
-    GLuint m_program{0};
-    GLuint m_vertex_array_object{0};
+    ////ubuffer host
+    //geometry
+    GeoDataGL m_data_geo[MAX_ID_SIZE];
+    size_t m_counter_geo{0};
+    GLuint m_ubuffer_geo{0};
+    GLuint m_bindpoint_geo{0};
+    //transform
+    TransformDataGL m_data_transform;
+    GLuint m_ubuffer_transform{0};
+    GLuint m_bindpoint_transform{0};
 
-    GLint m_location_id{0};
-    GLuint m_vbuffer_id{0};
-    GLint m_data_id[MAX_ID_SIZE];
-
-    GLint m_location_model{0};
-    glm::mat4 m_data_model;
-
-    GLint m_location_view{0};
-    glm::mat4 m_data_view;
-
-    GLint m_location_proj{0};
-    glm::mat4 m_data_proj;
-
-    //host
-    GeoDataGL m_data_geodata[MAX_ID_SIZE];
-    size_t m_counter_geodata{0};
-    GLuint m_ubuffer_geodata{0};
-    GLuint m_bindpoint_geodata{0};
-
-    //device
-    GLuint m_blockindex_geodata{0};
+    ////program telescope
+    //shader
+    GLuint m_shader_vertex_tel{0};
+    GLuint m_shader_geometry_tel{0};
+    GLuint m_shader_fragment_tel{0};
+    GLuint m_program_tel{0};
+    GLuint m_blockindex_geo_tel{0};
+    GLuint m_blockindex_transform_tel{0};
+    GLint m_location_tel_id{0};
+    //vbuffer
+    GLuint m_vertex_array_tel{0};
+    GLuint m_vbuffer_tel_id{0};
+    GLint m_data_tel_id[MAX_ID_SIZE];
 
     TelGL(const std::string& geo_js_string,
           const std::string& vertex_glsl,
@@ -59,14 +63,13 @@
 
     ~TelGL();
 
-    void updateGeoData(const std::string & geo_js_string);
+    void updateGeometry(const std::string & geo_js_string);
+    void updateTransform(float cameraX, float cameraY, float cameraZ,
+                         float centerX, float centerY, float centerZ,
+                         float upvectX, float upvectY, float upvectZ,
+                         float povHoriz, float nearDist, float farDist,
+                         float ratioWidthHeigh);
 
-    void lookAt(float cameraX, float cameraY, float cameraZ,
-                float centerX, float centerY, float centerZ,
-                float upvectX, float upvectY, float upvectZ,
-                float povHoriz, float nearDist, float farDist,
-                float ratioWidthHeigh
-                );
     void draw();
     void draw(int layer);
   };
