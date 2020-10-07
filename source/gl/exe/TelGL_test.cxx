@@ -23,37 +23,14 @@
 
 #include "linenoise.h"
 #include "myrapidjson.h"
-std::string LoadFileToString(const std::string& path){
-  std::ifstream ifs(path);
-  if(!ifs.good()){
-    std::cerr<<"LoadFileToString:: ERROR, unable to load file<"<<path<<">\n";
-    throw;
-  }
-
-  std::string str;
-  str.assign((std::istreambuf_iterator<char>(ifs) ),
-             (std::istreambuf_iterator<char>()));
-  return str;
-}
-
-template<typename T>
-static void PrintJson(const T& o){
-    rapidjson::StringBuffer sb;
-    rapidjson::Writer<rapidjson::StringBuffer> w(sb);
-    o.Accept(w);
-    rapidjson::PutN(sb, '\n', 1);
-    std::fwrite(sb.GetString(), 1, sb.GetSize(), stdout);
-}
-
 
 static const std::string help_usage = R"(
 Usage:
   -help              help message
   -verbose           verbose flag
-  -dataHit  [PATH]   path to data file (input)
+  -data     [PATH]   path to data file (input)
   -geometry [PATH]   path to geometry file (input)
 )";
-
 
 float deltaTime = 0.0f; // time between current frame and last frame
 float lastFrame = 0.0f;
@@ -64,8 +41,6 @@ glm::vec3 worldCenter = glm::vec3(0.0f, 0.0f,  0.0f);
 glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 
 
-JsonAllocator s_jsa;
-
 int main(int argc, char **argv){
   int do_help = false;
   int do_verbose = false;
@@ -73,11 +48,11 @@ int main(int argc, char **argv){
     {
      { "help",       no_argument,       &do_help,      1  },
      { "verbose",    no_argument,       &do_verbose,   1  },
-     { "dataHit",    required_argument, NULL,           'd' },
+     { "data",       required_argument, NULL,           'd' },
      { "geometry",   required_argument, NULL,           'g' },
      { 0, 0, 0, 0 }};
 
-  std::string dataHit_path;
+  std::string data_path;
   std::string geometry_path;
 
   int c;
@@ -85,7 +60,7 @@ int main(int argc, char **argv){
   while ((c = getopt_long_only(argc, argv, "", longopts, NULL))!= -1) {
     switch (c) {
     case 'd':
-      dataHit_path = optarg;
+      data_path = optarg;
       break;
     case 'g':
       geometry_path = optarg;
@@ -117,10 +92,10 @@ int main(int argc, char **argv){
     exit(0);
   }
 
-  if(geometry_path.empty() || dataHit_path.empty()){
+  if(geometry_path.empty() || data_path.empty()){
     std::fprintf(stdout, "Error: input option.\n");
     std::fprintf(stdout, "%s\n", help_usage.c_str());
-    // exit(1);
+    exit(1);
   }
 
   glfwSetErrorCallback([](int error, const char* description){
@@ -134,7 +109,7 @@ int main(int argc, char **argv){
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_SAMPLES, 4);
 
-  GLFWwindow* window = glfwCreateWindow((int)sWinWidth, (int)sWinHeight, "OpenGL Telescope test", NULL, NULL);
+  GLFWwindow* window = glfwCreateWindow((int)sWinWidth, (int)sWinHeight, "OpenGL telescope example", NULL, NULL);
   if (!window){ glfwTerminate(); exit(EXIT_FAILURE);}
   glfwMakeContextCurrent(window);
 
@@ -163,8 +138,9 @@ int main(int argc, char **argv){
                              });
 
   /////////////////////////////////////////////
-  std::string geometry_js_string = LoadFileToString(geometry_path);
-  TelGL telgl(geometry_js_string);
+  std::string jsstr_geo = TelGL::readFile(geometry_path);
+  JsonDocument jsdoc_geo = TelGL::createJsonDocument(jsstr_geo);
+  TelGL telgl(jsdoc_geo);
 
   while (!glfwWindowShouldClose(window)){
     float currentFrame = glfwGetTime();
@@ -180,41 +156,20 @@ int main(int argc, char **argv){
                           60.0f,          0.1f,           2000.0f,
                           sWinWidth / sWinHeight);
 
-    std::string jsstr=R"~~~cpp~raw~~~(
-{
-"tracks":
-{
-"data":
-[
-
-
-[
-[0, 0, 0, 1],
-[40, 0, 3, 1],
-[40, 0, 7, 1]
-],
-
-[
-[0, 0, 0, 1],
-[0, 20, 1, 1]
-]
-
-]
-
-}
-}
-)~~~cpp~raw~~~";
-
-
-    // telgl.draw();
-    std::istringstream iss(jsstr);
-    rapidjson::IStreamWrapper isw(iss);
-    JsonDocument jsdoc;
-    jsdoc.ParseStream(isw);
-    if(jsdoc.HasMember("tracks")){
-      telgl.drawTracks(jsdoc["tracks"]);
+    std::string jsstr_data = TelGL::readFile(data_path);
+    JsonDocument jsdoc_data = TelGL::createJsonDocument(jsstr_data);
+    if(jsdoc_data.HasMember("tracks")){
+      telgl.drawTracks(jsdoc_data["tracks"]);
     }
-    telgl.drawTelescope();
+    if(jsdoc_data.HasMember("hits")){
+      telgl.drawHits(jsdoc_data["hits"]);
+    }
+    if(jsdoc_data.HasMember("detectors")){
+      telgl.drawDetectors(jsdoc_data["detectors"]);
+    }
+    else{
+      telgl.drawDetectors();
+    }
     glfwSwapBuffers(window);
     glfwPollEvents();
   }

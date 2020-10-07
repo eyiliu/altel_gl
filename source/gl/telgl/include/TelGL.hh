@@ -57,24 +57,23 @@
     GLint m_data_tel_id[MAX_ID_SIZE];
     ////
 
-    ////program localhit
+    ////program hit
     //shader
-    GLuint m_shader_vertex_localhit{0};
-    GLuint m_shader_geometry_localhit{0};
-    GLuint m_shader_fragment_localhit{0};
-    GLuint m_program_localhit{0};
-    GLuint m_blockindex_geo_localhit{0};
-    GLuint m_blockindex_transform_localhit{0};
-    GLint m_location_localhit_pos{0};
+    GLuint m_shader_vertex_hit{0};
+    GLuint m_shader_geometry_hit{0};
+    GLuint m_shader_fragment_hit{0};
+    GLuint m_program_hit{0};
+    GLuint m_blockindex_geo_hit{0};
+    GLuint m_blockindex_transform_hit{0};
+    GLint m_location_hit_pos{0};
     //vbuffer
-    GLuint m_vertex_array_localhit{0};
-    GLuint m_vbuffer_localhit_pos{0};
+    GLuint m_vertex_array_hit{0};
+    GLuint m_vbuffer_hit_pos{0};
     ////
 
     ////program track
     //shader
     GLuint m_shader_vertex_track{0};
-    GLuint m_shader_geometry_track{0};
     GLuint m_shader_fragment_track{0};
     GLuint m_program_track{0};
     GLuint m_blockindex_geo_track{0};
@@ -85,22 +84,27 @@
     GLuint m_vbuffer_track_pos{0};
     ////
 
-    TelGL(const std::string& geo_js_string);
+    TelGL(const JsonValue& js);
 
     ~TelGL();
 
-    void updateGeometry(const std::string & geo_js_string);
+    void updateGeometry(const JsonValue& js);
     void updateTransform(float cameraX, float cameraY, float cameraZ,
                          float centerX, float centerY, float centerZ,
                          float upvectX, float upvectY, float upvectZ,
                          float povHoriz, float nearDist, float farDist,
                          float ratioWidthHeigh);
 
-    void drawTelescope(const JsonValue& js);
-    void drawTelescope();
+    void drawDetectors(const JsonValue& js);
+    void drawDetectors();
     void drawHits(const JsonValue& js);
     void drawTracks(const JsonValue& js);
     void draw();
+
+    static std::string readFile(const std::string& path);
+    static JsonDocument createJsonDocument(const std::string& str);
+    static JsonValue createJsonValue(JsonAllocator& jsa, const std::string& str);
+    static void printJsonValue(const JsonValue& o, bool pretty=false);
   };
 
 // }

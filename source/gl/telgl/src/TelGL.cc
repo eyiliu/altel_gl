@@ -20,23 +20,20 @@ namespace {
 #include "TelFragment_glsl.hh"
   ;
 
-  // default localhit
-  const GLchar* default_vertex_glsl_localhit =
+  // default hit
+  const GLchar* default_vertex_glsl_hit =
 #include "HitVertex_glsl.hh"
   ;
-  const GLchar* default_geometry_glsl_localhit =
+  const GLchar* default_geometry_glsl_hit =
 #include "HitGeometry_glsl.hh"
   ;
-  const GLchar* default_fragment_glsl_localhit =
+  const GLchar* default_fragment_glsl_hit =
 #include "TelFragment_glsl.hh" // using Tel
   ;
 
   // default track
   const GLchar* default_vertex_glsl_track =
 #include "TrackVertex_glsl.hh"
-  ;
-  const GLchar* default_geometry_glsl_track =
-#include "TrackGeometry_glsl.hh"
   ;
   const GLchar* default_fragment_glsl_track =
 #include "TelFragment_glsl.hh" // using Tel
@@ -62,8 +59,7 @@ namespace {
   }
 }
 
-TelGL::TelGL(const std::string& geo_js_string){
-
+TelGL::TelGL(const JsonValue &js){
   //// create buffer object  (geometry)
   glGenBuffers(1, &m_ubuffer_geo);
   // assign buffer as a vbuffer
@@ -120,42 +116,41 @@ TelGL::TelGL(const std::string& geo_js_string){
   glEnableVertexAttribArray(m_location_tel_id); //use currently bound vertex array object for the operation
   //////////////////////////////end of telescope////////////////////////////////////
 
-  //////////////////////////////localhit///////////////////////////////////////
-  ////// localhit data
+  //////////////////////////////hit///////////////////////////////////////
+  ////// hit data
   //// create vertex array object
-  glGenVertexArrays(1, &m_vertex_array_localhit);
+  glGenVertexArrays(1, &m_vertex_array_hit);
   //// create buffer object
-  glGenBuffers(1, &m_vbuffer_localhit_pos);
+  glGenBuffers(1, &m_vbuffer_hit_pos);
   //// assign buffer as a vbuffer in a vertex array object
-  glBindVertexArray(m_vertex_array_localhit);   // bind vao to GL_ARRAY_BUFFER
-  glBindBuffer(GL_ARRAY_BUFFER, m_vbuffer_localhit_pos);// bind vbo to GL_ARRAY_BUFFER
-  //assign storage to buffer object, MAX 1024 localhits
-  glNamedBufferData(m_vbuffer_localhit_pos, sizeof(GLint)*3*1024, NULL, GL_STATIC_DRAW);
+  glBindVertexArray(m_vertex_array_hit);   // bind vao to GL_ARRAY_BUFFER
+  glBindBuffer(GL_ARRAY_BUFFER, m_vbuffer_hit_pos);// bind vbo to GL_ARRAY_BUFFER
+  //assign storage to buffer object, MAX 1024 hits
+  glNamedBufferData(m_vbuffer_hit_pos, sizeof(GLfloat)*4*1024, NULL, GL_STATIC_DRAW);
   ////// program
   //// shader and variables
   // create program
-  m_shader_vertex_localhit   = createShader(GL_VERTEX_SHADER,   default_vertex_glsl_localhit);
-  m_shader_geometry_localhit = createShader(GL_GEOMETRY_SHADER, default_geometry_glsl_localhit);
-  m_shader_fragment_localhit = createShader(GL_FRAGMENT_SHADER, default_fragment_glsl_localhit);
-  m_program_localhit = glCreateProgram();
-  glAttachShader(m_program_localhit, m_shader_vertex_localhit);
-  glAttachShader(m_program_localhit, m_shader_geometry_localhit);
-  glAttachShader(m_program_localhit, m_shader_fragment_localhit);
-  glLinkProgram(m_program_localhit);
+  m_shader_vertex_hit   = createShader(GL_VERTEX_SHADER,   default_vertex_glsl_hit);
+  m_shader_geometry_hit = createShader(GL_GEOMETRY_SHADER, default_geometry_glsl_hit);
+  m_shader_fragment_hit = createShader(GL_FRAGMENT_SHADER, default_fragment_glsl_hit);
+  m_program_hit = glCreateProgram();
+  glAttachShader(m_program_hit, m_shader_vertex_hit);
+  glAttachShader(m_program_hit, m_shader_geometry_hit);
+  glAttachShader(m_program_hit, m_shader_fragment_hit);
+  glLinkProgram(m_program_hit);
   // get attributes from program
-  m_blockindex_geo_localhit = glGetUniformBlockIndex(m_program_localhit, "GeoData");
-  m_blockindex_transform_localhit = glGetUniformBlockIndex(m_program_localhit, "TransformData");
-  m_location_localhit_pos = glGetAttribLocation(m_program_localhit, "pos");
-  glVertexAttribIPointer(m_location_localhit_pos, 3, GL_INT, sizeof(GLint)*3, 0);
+  m_blockindex_geo_hit = glGetUniformBlockIndex(m_program_hit, "GeoData");
+  m_blockindex_transform_hit = glGetUniformBlockIndex(m_program_hit, "TransformData");
+  m_location_hit_pos = glGetAttribLocation(m_program_hit, "pos");
+  glVertexAttribPointer(m_location_hit_pos, 4, GL_FLOAT, GL_FALSE, sizeof(GLint)*4, 0);
   // connect attributes to buffer
   //// connect uniform block to bind point (ubuffer)
-  glUniformBlockBinding(m_program_localhit, m_blockindex_geo_localhit, m_bindpoint_geo);
-  glUniformBlockBinding(m_program_localhit, m_blockindex_transform_localhit, m_bindpoint_transform);
+  glUniformBlockBinding(m_program_hit, m_blockindex_geo_hit, m_bindpoint_geo);
+  glUniformBlockBinding(m_program_hit, m_blockindex_transform_hit, m_bindpoint_transform);
   //// connect vertex attribute to vertex array object (vbuffer)
-  glBindVertexArray(m_vertex_array_localhit);
-  glEnableVertexAttribArray(m_location_localhit_pos); //use currently bound vertex array object for the operation
-  //////////////////////////////end of localhit////////////////////////////////////
-
+  glBindVertexArray(m_vertex_array_hit);
+  glEnableVertexAttribArray(m_location_hit_pos); //use currently bound vertex array object for the operation
+  //////////////////////////////end of hit////////////////////////////////////
 
 
   //////////////////////////////track///////////////////////////////////////
@@ -173,11 +168,9 @@ TelGL::TelGL(const std::string& geo_js_string){
   //// shader and variables
   // create program
   m_shader_vertex_track   = createShader(GL_VERTEX_SHADER,   default_vertex_glsl_track);
-  // m_shader_geometry_track   = createShader(GL_GEOMETRY_SHADER,   default_geometry_glsl_track);
   m_shader_fragment_track = createShader(GL_FRAGMENT_SHADER, default_fragment_glsl_track);
   m_program_track = glCreateProgram();
   glAttachShader(m_program_track, m_shader_vertex_track);
-  // glAttachShader(m_program_track, m_shader_geometry_track);
   glAttachShader(m_program_track, m_shader_fragment_track);
   glLinkProgram(m_program_track);
   // get attributes from program
@@ -194,7 +187,10 @@ TelGL::TelGL(const std::string& geo_js_string){
   glEnableVertexAttribArray(m_location_track_pos); //use currently bound vertex array object for the operation
   //////////////////////////////end of track////////////////////////////////////
 
-  updateGeometry(geo_js_string);
+  if(!js.IsNull()){
+    updateGeometry(js);
+  }
+
 }
 
 TelGL::~TelGL(){
@@ -206,13 +202,13 @@ TelGL::~TelGL(){
   if(m_vertex_array_tel){glDeleteVertexArrays(1, &m_vertex_array_tel); m_vertex_array_tel = 0;}
   if(m_vbuffer_tel_id){glDeleteBuffers(1, &m_vbuffer_tel_id); m_vbuffer_tel_id = 0;}
   //
-  ////// localhit
-  if(m_program_localhit) {glDeleteProgram(m_program_localhit); m_program_localhit = 0;}
-  if(m_shader_fragment_localhit){glDeleteShader(m_shader_fragment_localhit); m_shader_fragment_localhit = 0;}
-  if(m_shader_geometry_localhit){glDeleteShader(m_shader_geometry_localhit); m_shader_geometry_localhit = 0;}
-  if(m_shader_vertex_localhit){glDeleteShader(m_shader_vertex_localhit); m_shader_vertex_localhit = 0;}
-  if(m_vertex_array_localhit){glDeleteVertexArrays(1, &m_vertex_array_localhit); m_vertex_array_localhit = 0;}
-  if(m_vbuffer_localhit_pos){glDeleteBuffers(1, &m_vbuffer_localhit_pos); m_vbuffer_localhit_pos = 0;}
+  ////// hit
+  if(m_program_hit) {glDeleteProgram(m_program_hit); m_program_hit = 0;}
+  if(m_shader_fragment_hit){glDeleteShader(m_shader_fragment_hit); m_shader_fragment_hit = 0;}
+  if(m_shader_geometry_hit){glDeleteShader(m_shader_geometry_hit); m_shader_geometry_hit = 0;}
+  if(m_shader_vertex_hit){glDeleteShader(m_shader_vertex_hit); m_shader_vertex_hit = 0;}
+  if(m_vertex_array_hit){glDeleteVertexArrays(1, &m_vertex_array_hit); m_vertex_array_hit = 0;}
+  if(m_vbuffer_hit_pos){glDeleteBuffers(1, &m_vbuffer_hit_pos); m_vbuffer_hit_pos = 0;}
   //
 
   ////// track
@@ -240,17 +236,14 @@ void TelGL::updateTransform(float cameraX, float cameraY, float cameraZ,
   glNamedBufferSubData(m_ubuffer_transform, 0, sizeof(m_data_transform), &m_data_transform);
 }
 
-void TelGL::updateGeometry(const std::string & geo_js_string){
-  std::istringstream iss(geo_js_string);
-  rapidjson::IStreamWrapper isw(iss);
-  rapidjson::Document doc_geo;
-  doc_geo.ParseStream(isw);
-  if(!doc_geo.HasMember("geo")){
-    std::fprintf(stderr, "geo json file error\n");
-    exit(1);
+
+void TelGL::updateGeometry(const JsonValue& js){
+  if(!js.HasMember("geo")){
+    std::fprintf(stderr, "unable to find \"geo\" key for detector goemerty from JS\n");
+    return;
   }
 
-  const auto &js_geo = doc_geo["geo"];
+  const auto &js_geo = js["geo"];
   size_t n = 0;
   for(const auto& l: js_geo.GetArray()){
     size_t id = l["id"].GetUint();
@@ -311,45 +304,26 @@ void TelGL::updateGeometry(const std::string & geo_js_string){
   std::fprintf(stdout, "set up geometry data with %i layers\n", m_counter_geo);
 }
 
-void TelGL::draw(){
-  GLint pos[12] = {100, 200, 0, 1000, 200, 1, 300, 200, 2, 700, 200, 3};
-  glUseProgram(m_program_localhit);
-  glBindVertexArray(m_vertex_array_localhit);
-  glNamedBufferSubData(m_vbuffer_localhit_pos, 0, sizeof(GLint)*12, pos);
-  glDrawArrays(GL_POINTS, 0, 4);
-
-  // pos.w  mode: 0 global-mm, 1 layerlocal-mm-center, 2 layerlocal-mm-corner, 3 layerlocal-pixel-corner
-  GLfloat pos_mod[16] = {
-                         0, 0, 0, 1,
-                         0, 20, 1, 1,
-                         0, 0, 0, 1,
-                         40, 0, 3, 1};
-  glUseProgram(m_program_track);
-  glBindVertexArray(m_vertex_array_track);
-  glNamedBufferSubData(m_vbuffer_track_pos, 0, sizeof(GLfloat)*16, pos_mod);
-  glDrawArrays(GL_LINE_STRIP, 0, 4);
-}
-
-void TelGL::drawTelescope(const JsonValue& js){
+void TelGL::drawDetectors(const JsonValue& js){
   if(js.HasMember("data")){
     const auto &js_data = js["data"];
     if(!js_data.IsArray() || !js_data.Size()){
+      std::fprintf(stderr, "unable to to decode detectors from JS\n");
       return;
     }
     glUseProgram(m_program_tel);
     glBindVertexArray(m_vertex_array_tel);
-
     std::vector<GLint> gldata(js_data.Size());
     auto it = gldata.begin();
-    for(const auto &js_hit : js_data.GetArray()){
-      *(it++) = js_hit[0].GetInt();
+    for(const auto &js_det : js_data.GetArray()){
+      *(it++) = js_det.GetInt();
     }
     glNamedBufferSubData(m_vbuffer_tel_id, 0, sizeof(GLint)*gldata.size(), gldata.data());
     glDrawArrays(GL_POINTS, 0, gldata.size());
   }
 }
 
-void TelGL::drawTelescope(){
+void TelGL::drawDetectors(){
   glUseProgram(m_program_tel);
   glBindVertexArray(m_vertex_array_tel);
   glNamedBufferSubData(m_vbuffer_tel_id, 0, sizeof(GLint)*m_counter_geo, m_data_tel_id);
@@ -361,10 +335,11 @@ void TelGL::drawHits(const JsonValue& js){
   if(js.HasMember("data")){
     const auto &js_data = js["data"];
     if(!js_data.IsArray() || !js_data.Size()){
+      std::fprintf(stderr, "unable to to decode hits from JS\n");
       return;
     }
-    glUseProgram(m_program_localhit);
-    glBindVertexArray(m_vertex_array_localhit);
+    glUseProgram(m_program_hit);
+    glBindVertexArray(m_vertex_array_hit);
     // TODO: glsl is vec3
     std::vector<GLfloat> gldata(4*js_data.Size());
     auto it = gldata.begin();
@@ -374,7 +349,7 @@ void TelGL::drawHits(const JsonValue& js){
       *(it++) = js_hit[2].GetDouble();
       *(it++) = js_hit[3].GetDouble();
     }
-    glNamedBufferSubData(m_vbuffer_localhit_pos, 0, sizeof(GLfloat)*gldata.size(), gldata.data());
+    glNamedBufferSubData(m_vbuffer_hit_pos, 0, sizeof(GLfloat)*gldata.size(), gldata.data());
     glDrawArrays(GL_POINTS, 0, gldata.size()/4);
   }
 }
@@ -383,6 +358,7 @@ void TelGL::drawTracks(const JsonValue& js){
   if(js.HasMember("data")){
     const auto &js_data = js["data"];
     if(!js_data.IsArray() || !js_data.Size()){
+      std::fprintf(stderr, "unable to to decode tracks from JS\n");
       return;
     }
     glUseProgram(m_program_track);
@@ -400,4 +376,51 @@ void TelGL::drawTracks(const JsonValue& js){
       glDrawArrays(GL_LINE_STRIP, 0, gldata.size()/4);
     }
   }
+}
+
+
+JsonDocument TelGL::createJsonDocument(const std::string& str){
+  std::istringstream iss(str);
+  rapidjson::IStreamWrapper isw(iss);
+  JsonDocument jsdoc;
+  jsdoc.ParseStream(isw);
+  if(jsdoc.HasParseError()){
+    std::fprintf(stderr, "rapidjson error<%s> when parsing input data at offset %llu\n",
+                 rapidjson::GetParseError_En(jsdoc.GetParseError()), jsdoc.GetErrorOffset());
+    throw std::runtime_error("TelGL::createJsonDocument has ParseError\n");
+  }
+  return jsdoc;
+}
+
+JsonValue TelGL::createJsonValue(JsonAllocator& jsa, const std::string& str){
+  JsonDocument jsdoc = createJsonDocument(str);
+  JsonValue js;
+  js.CopyFrom(jsdoc, jsa);
+  return js;
+}
+
+std::string TelGL::readFile(const std::string& path){
+  std::ifstream ifs(path);
+  if(!ifs.good()){
+    std::fprintf(stderr, "unable to raed file path<%s>\n", path);
+    throw std::runtime_error("File open error\n");
+  }
+  std::string str;
+  str.assign((std::istreambuf_iterator<char>(ifs) ),
+             (std::istreambuf_iterator<char>()));
+  return str;
+}
+
+void TelGL::printJsonValue(const JsonValue& o, bool pretty){
+  rapidjson::StringBuffer sb;
+  if(pretty){
+    rapidjson::Writer<rapidjson::StringBuffer> w(sb);
+    o.Accept(w);
+  }
+  else{
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> w(sb);
+    o.Accept(w);
+  }
+  rapidjson::PutN(sb, '\n', 1);
+  std::fwrite(sb.GetString(), 1, sb.GetSize(), stdout);
 }
