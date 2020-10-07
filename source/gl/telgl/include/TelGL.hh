@@ -5,6 +5,7 @@
 
 #include "gl.h"
 #include <glm/glm.hpp>
+#include "myrapidjson.h"
 
 // namespace altel{
   class TelGL{
@@ -56,7 +57,7 @@
     GLint m_data_tel_id[MAX_ID_SIZE];
     ////
 
-    ////program telescope
+    ////program localhit
     //shader
     GLuint m_shader_vertex_localhit{0};
     GLuint m_shader_geometry_localhit{0};
@@ -68,14 +69,23 @@
     //vbuffer
     GLuint m_vertex_array_localhit{0};
     GLuint m_vbuffer_localhit_pos{0};
-    GLint m_data_localhit_pos[MAX_ID_SIZE];
     ////
 
-    TelGL(const std::string& geo_js_string,
-          const std::string& vertex_glsl,
-          const std::string& geometry_glsl,
-          const std::string& fragment_glsl
-          );
+    ////program track
+    //shader
+    GLuint m_shader_vertex_track{0};
+    GLuint m_shader_geometry_track{0};
+    GLuint m_shader_fragment_track{0};
+    GLuint m_program_track{0};
+    GLuint m_blockindex_geo_track{0};
+    GLuint m_blockindex_transform_track{0};
+    GLint m_location_track_pos{0};
+    //vbuffer
+    GLuint m_vertex_array_track{0};
+    GLuint m_vbuffer_track_pos{0};
+    ////
+
+    TelGL(const std::string& geo_js_string);
 
     ~TelGL();
 
@@ -86,8 +96,11 @@
                          float povHoriz, float nearDist, float farDist,
                          float ratioWidthHeigh);
 
+    void drawTelescope(const JsonValue& js);
+    void drawTelescope();
+    void drawHits(const JsonValue& js);
+    void drawTracks(const JsonValue& js);
     void draw();
-    void draw(int layer);
   };
 
 // }

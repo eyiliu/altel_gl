@@ -1,4 +1,4 @@
-#version 150 core
+#version 430 core
 
 layout(points) in;
 in vec3 vColor[];
@@ -6,27 +6,35 @@ in vec3 vColor[];
 layout(line_strip, max_vertices = 2) out;
 out vec3 fColor;
 
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 proj;
+layout (std140) struct GeoDataLayer{
+  ivec4 id; // id, rev , rev, rev
+  vec4  pos; // vec3, pad
+  vec4  size;     // size_x, size_y, size_z, pad
+  vec4  color;    // vec3, pad
+  vec4  pitch;    // pitch_x pitch_y pitch_z/thick_z
+  uvec4 npixel;   // pixel_x pixel_y pixel_z/always1
+  mat4  trans;    // model
+};
+
+layout (std140) uniform GeoData{
+  GeoDataLayer  ly[20]; //
+} geoData;
+
+layout (std140) uniform TransformData{
+  mat4 model;
+  mat4 view;
+  mat4 proj;
+} transformData;
 
 void main(){
-  int    nlx = int(gl_in[0].gl_Position.z+0.1);
-  vec3   pos;
-  mat4   trans;
+  fColor = vColor[0].rgb;
 
-  vec3 pos_hit = pos.xyz + vec3(pitch.xy * gl_in[0].gl_Position.xy , 0);
-  //fColor = vColor[0];
-  fColor = color;
+  vec4 gp = vec4(gl_in[0].gl_Position.xyz, 1.0);
 
-  mat4 pvmMatrix = proj * view * model * trans;
-  vec4 gp = pvmMatrix * vec4(pos_hit, 1.0);
-  vec4 offset = pvmMatrix * vec4( 0.0,  0.0,  1.0, 0.0);
-
-  gl_Position = gp + offset;
+  gl_Position=vec4(0.0, 0.0, 0.0, 1.0);
   EmitVertex();
 
-  gl_Position = gp - offset;
+  gl_Position = gp;
   EmitVertex();
 
   EndPrimitive();

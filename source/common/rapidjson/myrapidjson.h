@@ -44,4 +44,13 @@
 #  include "ostreamwrapper.h"
 #  include "stream.h"
 #  include "error/en.h"
+
+
+using JsonAllocator = rapidjson::CrtAllocator;
+using JsonStackAllocator = rapidjson::CrtAllocator;
+using JsonValue = rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::CrtAllocator>;
+using JsonDocument = rapidjson::GenericDocument<rapidjson::UTF8<char>, rapidjson::CrtAllocator, rapidjson::CrtAllocator>;
+using JsonReader = rapidjson::GenericReader<rapidjson::UTF8<char>, rapidjson::UTF8<char>, rapidjson::CrtAllocator>;
+
+
 #endif

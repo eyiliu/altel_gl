@@ -1,9 +1,9 @@
 #version 430 core
+in vec4 pos;
+// pos.xyz position
+// pos.w  mode: 0 global-mm, 1 layerlocal-mm-center, 2 layerlocal-mm-corner, 3 layerlocal-pixel-corner
 
-in ivec3 pos;
-
-out vec3 vColor;
-
+out vec3 fColor;
 layout (std140) struct GeoDataLayer{
   ivec4 id; // id, rev , rev, rev
   vec4  pos; // vec3, pad
@@ -24,24 +24,41 @@ layout (std140) uniform TransformData{
   mat4 proj;
 } transformData;
 
-
 void main(){
-  GeoDataLayer geo;
-  bool found = false;
-  for (int k = 0; k < 20; ++k){
-    if(pos.z == geoData.ly[k].id.x ){
-      geo = geoData.ly[k];
-      found = true;
-      break;
+  vec4 pos_global;
+  // pos.w  mode: 0 global-mm, 1 layerlocal-mm-center, 2 layerlocal-mm-corner, 3 layerlocal-pixel-corner
+  if(abs(pos.w) < 0.1){ //global-mm
+    pos_global = vec4(pos.xyz, 1.0);
+    fColor = vec3(0.0, 0.0, 0.0);
+  }
+  else{
+    GeoDataLayer geo;
+    bool found = false;
+    for (int k = 0; k < 20; ++k){
+      if( abs(pos.z - geoData.ly[k].id.x) < 0.1){
+        geo = geoData.ly[k];
+        found = true;
+        break;
+      }
     }
+    if(!found){
+      return ;
+    }
+    if(abs(pos.w-1.0) < 0.1){ // local-mm-center-zero
+      pos_global = geo.trans * vec4(geo.pos.xy + pos.xy, geo.pos.z, 1.0);
+    }
+    else if(abs(pos.w-2.0) < 0.1){ // local-mm-corner-zero
+      pos_global = geo.trans * vec4(geo.pos.xy - geo.size.xy/2 + pos.xy, geo.pos.z, 1.0);
+    }
+    else if(abs(pos.w-3.0) < 0.1){ // local-pixel-corner-zero
+      pos_global = geo.trans * vec4(geo.pos.xy - geo.pitch.xy*geo.npixel.xy/2.0 + geo.pitch.xy*pos.xy, geo.pos.z, 1.0);
+    }
+    else{  // unknown, do nothing
+      return;
+    }
+    fColor = geo.color.rgb;
   }
-  if(!found){
-    return ;
-  }
-  vec4 pos_global = geo.trans * vec4(geo.pos.xyz - (geo.pitch.xyz*geo.npixel.xyz /2) + vec3( geo.pitch.xy * pos.xy, 0),  1.0);
 
   mat4 pvmMatrix = transformData.proj * transformData.view * transformData.model;
-
-  gl_Position = pvmMatrix * vec4(pos_global.xyz, 1.0)
-  vColor = geo.color.rgb;
+  gl_Position = pvmMatrix * vec4(pos_global.xyz, 1.0);
 }

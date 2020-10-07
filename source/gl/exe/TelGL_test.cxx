@@ -23,7 +23,6 @@
 
 #include "linenoise.h"
 #include "myrapidjson.h"
-
 std::string LoadFileToString(const std::string& path){
   std::ifstream ifs(path);
   if(!ifs.good()){
@@ -63,6 +62,9 @@ float sWinHeight = 480;
 glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  400.0f);
 glm::vec3 worldCenter = glm::vec3(0.0f, 0.0f,  0.0f);
 glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
+
+
+JsonAllocator s_jsa;
 
 int main(int argc, char **argv){
   int do_help = false;
@@ -162,7 +164,7 @@ int main(int argc, char **argv){
 
   /////////////////////////////////////////////
   std::string geometry_js_string = LoadFileToString(geometry_path);
-  TelGL telgl(geometry_js_string,"","","");
+  TelGL telgl(geometry_js_string);
 
   while (!glfwWindowShouldClose(window)){
     float currentFrame = glfwGetTime();
@@ -178,7 +180,41 @@ int main(int argc, char **argv){
                           60.0f,          0.1f,           2000.0f,
                           sWinWidth / sWinHeight);
 
-    telgl.draw();
+    std::string jsstr=R"~~~cpp~raw~~~(
+{
+"tracks":
+{
+"data":
+[
+
+
+[
+[0, 0, 0, 1],
+[40, 0, 3, 1],
+[40, 0, 7, 1]
+],
+
+[
+[0, 0, 0, 1],
+[0, 20, 1, 1]
+]
+
+]
+
+}
+}
+)~~~cpp~raw~~~";
+
+
+    // telgl.draw();
+    std::istringstream iss(jsstr);
+    rapidjson::IStreamWrapper isw(iss);
+    JsonDocument jsdoc;
+    jsdoc.ParseStream(isw);
+    if(jsdoc.HasMember("tracks")){
+      telgl.drawTracks(jsdoc["tracks"]);
+    }
+    telgl.drawTelescope();
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
