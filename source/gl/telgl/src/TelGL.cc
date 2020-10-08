@@ -273,76 +273,73 @@ void TelGL::updateTransform(const JsonValue& js){
 
 
 void TelGL::updateGeometry(const JsonValue& js){
-  if(!js.HasMember("geo")){
-    std::fprintf(stderr, "unable to find \"geo\" key for detector goemerty from JS\n");
+  if(!js.HasMember("geometry")){
+    std::fprintf(stderr, "unable to find \"geomerty\" key for detector geomerty from JS\n");
     return;
   }
 
-  const auto &js_geo = js["geo"];
+  const auto &js_geo = js["geometry"];
+  const auto &js_dets = js_geo["detectors"];
   size_t n = 0;
-  for(const auto& l: js_geo.GetArray()){
-    size_t id = l["id"].GetUint();
-    double cx = l["centerX"].GetDouble();
-    double cy = l["centerY"].GetDouble();
-    double cz = l["centerZ"].GetDouble();
-    double rx = l["rotX"].GetDouble();
-    double ry = l["rotY"].GetDouble();
-    double rz = l["rotZ"].GetDouble();
-    double pxn = l["pixelXN"].GetDouble();
-    double pyn = l["pixelYN"].GetDouble();
-    double hx = l["halfX"].GetDouble();
-    double hy = l["halfY"].GetDouble();
-    double hz = l["halfZ"].GetDouble();
+  for(const auto& js_det: js_dets.GetArray()){
+    size_t id = js_det["id"].GetUint();
+    double cx = js_det["center"]["x"].GetDouble();
+    double cy = js_det["center"]["y"].GetDouble();
+    double cz = js_det["center"]["z"].GetDouble();
+    double rx = js_det["rotation"]["x"].GetDouble();
+    double ry = js_det["rotation"]["y"].GetDouble();
+    double rz = js_det["rotation"]["z"].GetDouble();
+    double ptx = js_det["pitch"]["x"].GetDouble();
+    double pty = js_det["pitch"]["y"].GetDouble();
+    double ptz = js_det["pitch"]["z"].GetDouble();
+    double px = js_det["pixel"]["x"].GetDouble();
+    double py = js_det["pixel"]["y"].GetDouble();
+    double pz = js_det["pixel"]["z"].GetDouble();
+    double sx = js_det["size"]["x"].GetDouble();
+    double sy = js_det["size"]["y"].GetDouble();
+    double sz = js_det["size"]["z"].GetDouble();
 
-    double colorR = 0;
-    double colorG = 0;
-    double colorB = 1;
+    double colorR = js_det["color"]["r"].GetDouble();
+    double colorG = js_det["color"]["g"].GetDouble();;
+    double colorB = js_det["color"]["b"].GetDouble();;
 
-    if(l.HasMember("colorRGB") &&
-       l["colorRGB"].IsArray() &&
-       l["colorRGB"].Size() == 3){
-      colorR = l["colorRGB"][0].GetDouble();
-      colorG = l["colorRGB"][1].GetDouble();
-      colorB = l["colorRGB"][2].GetDouble();
-    }
     m_data_tel_id[n] = id; //
     m_data_geo[n].id[0] = id;
     m_data_geo[n].pos[0]=  cx;
     m_data_geo[n].pos[1]=  cy;
     m_data_geo[n].pos[2]=  cz;
     m_data_geo[n].pos[3]=  0;
-    m_data_geo[n].size[0] = hx*2;
-    m_data_geo[n].size[1] = hy*2;
-    m_data_geo[n].size[2] = hz*2;
+    m_data_geo[n].size[0] = sx;
+    m_data_geo[n].size[1] = sy;
+    m_data_geo[n].size[2] = sz;
     m_data_geo[n].size[3] = 0;
     m_data_geo[n].color[0]= colorR;
     m_data_geo[n].color[1]= colorG;
     m_data_geo[n].color[2]= colorB;
     m_data_geo[n].color[3]= 0;
-    m_data_geo[n].pitch[0]= hx*2/pxn;
-    m_data_geo[n].pitch[1]= hy*2/pyn;
-    m_data_geo[n].pitch[2]= hz*2/1;
+    m_data_geo[n].pitch[0]= ptx;
+    m_data_geo[n].pitch[1]= pty;
+    m_data_geo[n].pitch[2]= ptz;
     m_data_geo[n].pitch[3]= 0;
-    m_data_geo[n].npixel[0]= pxn;
-    m_data_geo[n].npixel[1]= pyn;
-    m_data_geo[n].npixel[2]= 1;
+    m_data_geo[n].npixel[0]= px;
+    m_data_geo[n].npixel[1]= py;
+    m_data_geo[n].npixel[2]= pz;
     m_data_geo[n].npixel[3]= 0;
     n++;
     if(n>=sizeof(m_data_geo)/sizeof(TelGL::GeoDataGL)){
-      std::fprintf(stdout, "TelGL:: Max size of geo is reached, ignoring later geo !\n");
+      std::fprintf(stdout, "TelGL:: Max size of geo is reached, ignoring later detectors!\n");
       break;
     }
   }
   m_counter_geo = n;
-
   glNamedBufferSubData(m_ubuffer_geo, 0, sizeof(TelGL::GeoDataGL)*m_counter_geo, &m_data_geo[0]);
-  std::fprintf(stdout, "set up geometry data with %i layers\n", m_counter_geo);
+  //std::fprintf(stdout, "set up geometry data with %i layers\n", m_counter_geo);
 }
 
 void TelGL::drawDetectors(const JsonValue& js){
-  if(js.HasMember("data")){
-    const auto &js_data = js["data"];
-    if(!js_data.IsArray() || !js_data.Size()){
+  if(js.HasMember("detectors")){
+    const auto &js_data = js["detectors"];
+    if(!js_data.IsArray()){
       std::fprintf(stderr, "unable to to decode detectors from JS\n");
       return;
     }
@@ -367,10 +364,11 @@ void TelGL::drawDetectors(){
 
 // TODO: change glsl from ivec3 to vec4
 void TelGL::drawHits(const JsonValue& js){
-  if(js.HasMember("data")){
-    const auto &js_data = js["data"];
-    if(!js_data.IsArray() || !js_data.Size()){
+  if(js.HasMember("hits")){
+    const auto &js_data = js["hits"];
+    if(!js_data.IsArray()){
       std::fprintf(stderr, "unable to to decode hits from JS\n");
+      printJsonValue(js, true);
       return;
     }
     glUseProgram(m_program_hit);
@@ -390,10 +388,11 @@ void TelGL::drawHits(const JsonValue& js){
 }
 
 void TelGL::drawTracks(const JsonValue& js){
-  if(js.HasMember("data")){
-    const auto &js_data = js["data"];
-    if(!js_data.IsArray() || !js_data.Size()){
+  if(js.HasMember("tracks")){
+    const auto &js_data = js["tracks"];
+    if(!js_data.IsArray()){
       std::fprintf(stderr, "unable to to decode tracks from JS\n");
+      printJsonValue(js, true);
       return;
     }
     glUseProgram(m_program_track);
@@ -413,6 +412,80 @@ void TelGL::drawTracks(const JsonValue& js){
   }
 }
 
+
+JsonDocument TelGL::createGeometryExample(size_t num){
+  static constexpr const float colors[][3]=
+    {
+     {1.0, 0.0, 0.0}, //red
+     {0.0, 1.0, 0.0}, //green
+     {0.0, 0.0, 1.0}, //blue
+     {0.0, 0.5, 0.5}, //darkcyan
+     {1.0, 0.0, 1.0}, //magenta
+     {0.5, 0.5, 0.0}, //darkyellow
+     {0.5, 0.0, 0.0}, //darkred
+     {0.0, 0.5, 0.0}, //darkgreen
+     {0.0, 0.0, 0.5}, //darkblue
+     {0.5, 0.0, 0.5}, //darkmagenta
+     {0.0, 0.0, 0.0}, //black
+     {0.0, 1.0, 1.0}, //cyan
+     {1.0, 1.0, 0.0}}; //yellow
+  static constexpr const size_t ncolor=
+    sizeof(colors)/sizeof(float)/3;
+
+  JsonDocument jsdoc;
+  jsdoc.SetObject();
+  JsonAllocator& jsa= jsdoc.GetAllocator();
+  using rapidjson::kObjectType;
+  using rapidjson::kArrayType;
+  JsonValue js_geo(kObjectType);
+  JsonValue js_dets(kArrayType);
+  for(size_t i=0; i<num; i++){
+    JsonValue js_det(kObjectType);
+    js_det.AddMember("id", i, jsa);
+
+    JsonValue js_size(kObjectType);
+    js_size.AddMember("x", 0.02924*1024., jsa);
+    js_size.AddMember("y", 0.02688*512., jsa);
+    js_size.AddMember("z", 1., jsa);
+    js_det.AddMember("size", std::move(js_size), jsa);
+
+    JsonValue js_pitch(kObjectType);
+    js_pitch.AddMember("x", 0.02924, jsa);
+    js_pitch.AddMember("y", 0.02688, jsa);
+    js_pitch.AddMember("z", 1., jsa);
+    js_det.AddMember("pitch", std::move(js_pitch), jsa);
+
+    JsonValue js_pixel(kObjectType);
+    js_pixel.AddMember("x", 1024, jsa);
+    js_pixel.AddMember("y", 512, jsa);
+    js_pixel.AddMember("z", 1, jsa);
+    js_det.AddMember("pixel", std::move(js_pixel), jsa);
+
+    JsonValue js_color(kObjectType);
+    js_color.AddMember("r", colors[i%ncolor][0], jsa);
+    js_color.AddMember("g", colors[i%ncolor][1], jsa);
+    js_color.AddMember("b", colors[i%ncolor][2], jsa);
+    js_det.AddMember("color", std::move(js_color), jsa);
+
+    JsonValue js_center(kObjectType);
+    js_center.AddMember("x", 0., jsa);
+    js_center.AddMember("y", 0., jsa);
+    js_center.AddMember("z", 40.*i, jsa);
+    js_det.AddMember("center", std::move(js_center), jsa);
+
+    JsonValue js_rotation(kObjectType);
+    js_rotation.AddMember("x", 0., jsa);
+    js_rotation.AddMember("y", 0., jsa);
+    js_rotation.AddMember("z", 0., jsa);
+    js_det.AddMember("rotation", std::move(js_rotation), jsa);
+
+    js_dets.PushBack(js_det, jsa);
+  }
+  js_geo.AddMember("detectors", std::move(js_dets), jsa);
+  jsdoc.AddMember("geometry", std::move(js_geo), jsa);
+
+  return jsdoc;
+}
 
 
 JsonDocument TelGL::createTransformExample(){
@@ -487,13 +560,15 @@ std::string TelGL::readFile(const std::string& path){
 void TelGL::printJsonValue(const JsonValue& o, bool pretty){
   rapidjson::StringBuffer sb;
   if(pretty){
-    rapidjson::Writer<rapidjson::StringBuffer> w(sb);
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> w(sb);
     o.Accept(w);
   }
   else{
-    rapidjson::PrettyWriter<rapidjson::StringBuffer> w(sb);
+    rapidjson::Writer<rapidjson::StringBuffer> w(sb);
     o.Accept(w);
   }
   rapidjson::PutN(sb, '\n', 1);
   std::fwrite(sb.GetString(), 1, sb.GetSize(), stdout);
 }
+
+

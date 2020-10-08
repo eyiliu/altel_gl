@@ -163,13 +163,13 @@ uint64_t TelViewer::asyncLoop(){
 
     const JsonValue& js_data = *jssp;
     if(js_data.HasMember("tracks")){
-      telgl.drawTracks(js_data["tracks"]);
+      telgl.drawTracks(js_data);
     }
     if(js_data.HasMember("hits")){
-      telgl.drawHits(js_data["hits"]);
+      telgl.drawHits(js_data);
     }
     if(js_data.HasMember("detectors")){
-      telgl.drawDetectors(js_data["detectors"]);
+      telgl.drawDetectors(js_data);
     }
     else{
       telgl.drawDetectors();

@@ -142,6 +142,9 @@ int main(int argc, char **argv){
   JsonDocument jsdoc_geo = altel::TelGL::createJsonDocument(jsstr_geo);
   altel::TelGL telgl(jsdoc_geo);
 
+  // JsonDocument jsconf_geo = altel::TelGL::createGeometryExample();
+  // altel::TelGL::printJsonValue(jsconf_geo, true);
+
   JsonDocument jsconf_trans = altel::TelGL::createTransformExample();
   while (!glfwWindowShouldClose(window)){
     float currentFrame = glfwGetTime();
@@ -170,13 +173,13 @@ int main(int argc, char **argv){
     std::string jsstr_data = altel::TelGL::readFile(data_path);
     JsonDocument jsdoc_data = altel::TelGL::createJsonDocument(jsstr_data);
     if(jsdoc_data.HasMember("tracks")){
-      telgl.drawTracks(jsdoc_data["tracks"]);
+      telgl.drawTracks(jsdoc_data);
     }
     if(jsdoc_data.HasMember("hits")){
-      telgl.drawHits(jsdoc_data["hits"]);
+      telgl.drawHits(jsdoc_data);
     }
     if(jsdoc_data.HasMember("detectors")){
-      telgl.drawDetectors(jsdoc_data["detectors"]);
+      telgl.drawDetectors(jsdoc_data);
     }
     else{
       telgl.drawDetectors();
