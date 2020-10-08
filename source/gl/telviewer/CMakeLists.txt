@@ -1,7 +1,9 @@
 add_library(altel-telviewer SHARED src/TelViewer.cc)
+
+find_package(glfw3 3.3 REQUIRED)
 target_link_libraries(altel-telviewer
-  PUBLIC atltel-telgl
-  PRIVATE mycommon
+  PUBLIC 
+  PRIVATE mycommon glfw altel-telgl
   )
 
 set(LIB_PUBLIC_HEADERS include/TelViewer.hh)

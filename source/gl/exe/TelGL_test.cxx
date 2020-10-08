@@ -36,7 +36,7 @@ float deltaTime = 0.0f; // time between current frame and last frame
 float lastFrame = 0.0f;
 float sWinWidth = 1000;
 float sWinHeight = 480;
-glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  400.0f);
+glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  -1000.0f);
 glm::vec3 worldCenter = glm::vec3(0.0f, 0.0f,  0.0f);
 glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 
@@ -123,9 +123,9 @@ int main(int argc, char **argv){
                                  glfwSetWindowShouldClose(window, GLFW_TRUE);
                                }
                                if (key == GLFW_KEY_Q && action != GLFW_RELEASE)
-                                 cameraPos -= (cameraPos - worldCenter) * (deltaTime * 0.1f);
+                                 cameraPos -= (cameraPos - worldCenter) * (deltaTime * 1.0f);
                                if (key == GLFW_KEY_E && action != GLFW_RELEASE)
-                                 cameraPos += (cameraPos - worldCenter) * (deltaTime * 0.1f);
+                                 cameraPos += (cameraPos - worldCenter) * (deltaTime * 1.0f);
                                //note: rotation does not work as expectation, BUT WORKS SOMEHOW
                                if (key == GLFW_KEY_A && action != GLFW_RELEASE)
                                  cameraPos -= glm::cross((cameraPos - worldCenter), glm::vec3(0.0f, 1.0f,  0.0f)) * (deltaTime * 2.0f);
@@ -138,10 +138,11 @@ int main(int argc, char **argv){
                              });
 
   /////////////////////////////////////////////
-  std::string jsstr_geo = TelGL::readFile(geometry_path);
-  JsonDocument jsdoc_geo = TelGL::createJsonDocument(jsstr_geo);
-  TelGL telgl(jsdoc_geo);
+  std::string jsstr_geo = altel::TelGL::readFile(geometry_path);
+  JsonDocument jsdoc_geo = altel::TelGL::createJsonDocument(jsstr_geo);
+  altel::TelGL telgl(jsdoc_geo);
 
+  JsonDocument jsconf_trans = altel::TelGL::createTransformExample();
   while (!glfwWindowShouldClose(window)){
     float currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
@@ -150,14 +151,24 @@ int main(int argc, char **argv){
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    telgl.updateTransform(cameraPos[0],   cameraPos[1],   cameraPos[2],
-                          worldCenter[0], worldCenter[1], worldCenter[2],
-                          cameraUp[0],    cameraUp[1],    cameraUp[2],
-                          60.0f,          0.1f,           2000.0f,
-                          sWinWidth / sWinHeight);
+    jsconf_trans["trans"]["lookat"]["eye"]["x"]= cameraPos[0];
+    jsconf_trans["trans"]["lookat"]["eye"]["y"]= cameraPos[1];
+    jsconf_trans["trans"]["lookat"]["eye"]["z"]= cameraPos[2];
+    jsconf_trans["trans"]["lookat"]["center"]["x"]= worldCenter[0];
+    jsconf_trans["trans"]["lookat"]["center"]["y"]= worldCenter[1];
+    jsconf_trans["trans"]["lookat"]["center"]["z"]= worldCenter[2];
+    jsconf_trans["trans"]["lookat"]["up"]["x"]= cameraUp[0];
+    jsconf_trans["trans"]["lookat"]["up"]["y"]= cameraUp[1];
+    jsconf_trans["trans"]["lookat"]["up"]["z"]= cameraUp[2];
+    jsconf_trans["trans"]["persp"]["fov"]= 60;
+    jsconf_trans["trans"]["persp"]["ratio"]= sWinWidth / sWinHeight;
+    jsconf_trans["trans"]["persp"]["near"]= 0.1;
+    jsconf_trans["trans"]["persp"]["far"]= 2000;
 
-    std::string jsstr_data = TelGL::readFile(data_path);
-    JsonDocument jsdoc_data = TelGL::createJsonDocument(jsstr_data);
+    telgl.updateTransform(jsconf_trans);
+
+    std::string jsstr_data = altel::TelGL::readFile(data_path);
+    JsonDocument jsdoc_data = altel::TelGL::createJsonDocument(jsstr_data);
     if(jsdoc_data.HasMember("tracks")){
       telgl.drawTracks(jsdoc_data["tracks"]);
     }

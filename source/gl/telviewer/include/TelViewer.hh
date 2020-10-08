@@ -11,12 +11,11 @@
 #include <thread>
 #include <regex>
 #include <iostream>
+#include <future>
 
 #include <unistd.h>
 
-#include "TelGL.hh"
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
+#include "myrapidjson.h"
 
 namespace altel{
   class TelViewer{
@@ -25,11 +24,11 @@ namespace altel{
 
     void pushObject(std::shared_ptr<JsonValue> dp);
     void popFrontObject();
-    void clearObjects()
+    void clearObjects();
     std::shared_ptr<JsonValue>& frontObject();
 
     void stopAsyncLoop();
-    void startAsyncLoop()
+    void startAsyncLoop();
     uint64_t asyncLoop();
 
   private:

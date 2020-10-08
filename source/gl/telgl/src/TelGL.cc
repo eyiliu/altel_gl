@@ -1,3 +1,4 @@
+#include "gl.h"
 
 #include "myrapidjson.h"
 #include <rapidjson/document.h>
@@ -7,6 +8,8 @@
 
 #include "TelGL.hh"
 #include "glm/ext.hpp"
+
+using namespace altel;
 
 namespace {
   // default tel
@@ -53,7 +56,7 @@ namespace {
       glGetShaderInfoLog(shader, maxLength, &maxLength, infoLog.data());
       std::fprintf(stderr, "ERROR is catched at compile time of opengl GLSL.\n%s", infoLog.data());
       std::fprintf(stderr, "======problematic GLSL code below=====\n%s\n=====end of GLSL code====\n", src);
-      throw;
+      throw std::runtime_error("unable to compile glsl");
     }
     return shader;
   }
@@ -237,6 +240,38 @@ void TelGL::updateTransform(float cameraX, float cameraY, float cameraZ,
 }
 
 
+void TelGL::updateTransform(const JsonValue& js){
+  if(!js.HasMember("trans")){
+    std::fprintf(stderr, "unable to find \"trans\" key from JS\n");
+    printJsonValue(js, true);
+    throw;
+    return;
+  }
+  const auto &js_trans = js["trans"];
+  glm::mat4 mvp[3]; // 0 model, 1 view, 2 proj
+
+  // const auto &js_model = js_trans["model"];
+  mvp[0] = glm::mat4( 1.0f );
+
+  const auto &js_lookat = js_trans["lookat"];
+  const auto &js_eye = js_lookat["eye"];
+  const auto &js_center = js_lookat["center"];
+  const auto &js_up = js_lookat["up"];
+  mvp[1] = glm::lookAt(glm::vec3(js_eye["x"].GetDouble(), js_eye["y"].GetDouble(), js_eye["z"].GetDouble()),    // eye position
+                       glm::vec3(js_center["x"].GetDouble(), js_center["y"].GetDouble(), js_center["z"].GetDouble()), // object center
+                       glm::vec3(js_up["x"].GetDouble(), js_up["y"].GetDouble(), js_up["z"].GetDouble()));   // up vector
+
+  const auto &js_pers = js_trans["persp"];
+  const auto &js_fov = js_pers["fov"];
+  const auto &js_ratio = js_pers["ratio"];
+  const auto &js_near = js_pers["near"];
+  const auto &js_far = js_pers["far"];
+  mvp[2] = glm::perspective(glm::radians(js_fov.GetDouble()), js_ratio.GetDouble(), js_near.GetDouble(), js_far.GetDouble());
+
+  glNamedBufferSubData(m_ubuffer_transform, 0, sizeof(mvp), mvp);
+}
+
+
 void TelGL::updateGeometry(const JsonValue& js){
   if(!js.HasMember("geo")){
     std::fprintf(stderr, "unable to find \"geo\" key for detector goemerty from JS\n");
@@ -378,6 +413,44 @@ void TelGL::drawTracks(const JsonValue& js){
   }
 }
 
+
+
+JsonDocument TelGL::createTransformExample(){
+  JsonDocument jsdoc_trans;
+  jsdoc_trans.SetObject();
+  JsonAllocator& jsa= jsdoc_trans.GetAllocator();
+
+  using rapidjson::kObjectType;
+  JsonValue js_trans(kObjectType);
+
+  JsonValue js_lookat(kObjectType);
+  JsonValue js_eye(kObjectType);
+  js_eye.AddMember("x", 0., jsa);
+  js_eye.AddMember("y", 0., jsa);
+  js_eye.AddMember("z", -1000., jsa);
+  js_lookat.AddMember("eye", std::move(js_eye), jsa);
+  JsonValue js_center(kObjectType);
+  js_center.AddMember("x", 0., jsa);
+  js_center.AddMember("y", 0., jsa);
+  js_center.AddMember("z", 0., jsa);
+  js_lookat.AddMember("center", std::move(js_center), jsa);
+  JsonValue js_up(kObjectType);
+  js_up.AddMember("x", 0., jsa);
+  js_up.AddMember("y", 1., jsa);
+  js_up.AddMember("z", 0., jsa);
+  js_lookat.AddMember("up", std::move(js_up), jsa);
+  js_trans.AddMember("lookat", std::move(js_lookat), jsa);
+
+  JsonValue js_persp(kObjectType);
+  js_persp.AddMember("fov", 60., jsa);
+  js_persp.AddMember("ratio",2., jsa);
+  js_persp.AddMember("near",0.1, jsa);
+  js_persp.AddMember("far", 2000., jsa);
+  js_trans.AddMember("persp", std::move(js_persp), jsa);
+
+  jsdoc_trans.AddMember("trans", std::move(js_trans), jsa);
+  return jsdoc_trans;
+}
 
 JsonDocument TelGL::createJsonDocument(const std::string& str){
   std::istringstream iss(str);

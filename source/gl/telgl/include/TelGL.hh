@@ -3,11 +3,12 @@
 #include <vector>
 #include <memory>
 
-#include "gl.h"
 #include <glm/glm.hpp>
+#include "gl.h"
+
 #include "myrapidjson.h"
 
-// namespace altel{
+namespace altel{
   class TelGL{
   public:
     struct GeoDataGL{
@@ -89,6 +90,7 @@
     ~TelGL();
 
     void updateGeometry(const JsonValue& js);
+    void updateTransform(const JsonValue& js);
     void updateTransform(float cameraX, float cameraY, float cameraZ,
                          float centerX, float centerY, float centerZ,
                          float upvectX, float upvectY, float upvectZ,
@@ -101,10 +103,12 @@
     void drawTracks(const JsonValue& js);
     void draw();
 
+
+    static JsonDocument createGeometryExample(size_t n=8);
+    static JsonDocument createTransformExample();
     static std::string readFile(const std::string& path);
     static JsonDocument createJsonDocument(const std::string& str);
     static JsonValue createJsonValue(JsonAllocator& jsa, const std::string& str);
     static void printJsonValue(const JsonValue& o, bool pretty=false);
   };
-
-// }
+}

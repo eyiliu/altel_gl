@@ -1,4 +1,10 @@
+#include "TelGL.hh"
 #include "TelViewer.hh"
+
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
+
+using namespace altel;
 
 TelViewer::~TelViewer(){
   stopAsyncLoop();
@@ -87,7 +93,8 @@ uint64_t TelViewer::asyncLoop(){
 
 
   //TODO: create geo js
-  TelGL telgl();
+  JsonValue js_geo;
+  TelGL telgl(js_geo);
   uint64_t n_gl_frame = 0;
 
   float deltaTime = 0.0f; // time between current frame and last frame
@@ -95,9 +102,10 @@ uint64_t TelViewer::asyncLoop(){
   glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  400.0f);
   glm::vec3 worldCenter = glm::vec3(0.0f, 0.0f,  0.0f);
   glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
+  JsonDocument jsconf_trans = altel::TelGL::createTransformExample();
   while(flag_running && !glfwWindowShouldClose(window)){
     float currentFrame = glfwGetTime();
-    deltaTime = currentFrame - m_lastFrame;
+    deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
 
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -118,12 +126,12 @@ uint64_t TelViewer::asyncLoop(){
       cameraPos += glm::cross((cameraPos - worldCenter), glm::vec3(1.0f, 0.0f,  0.0f)) * (deltaTime * 2.0f);
 
     // pausing
-    if(glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
+    if(glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS){
       continue;
     }
 
     // continue; // debugging
-    auto &js_ref = frontObject()(); //ref only,  no copy, no move
+    auto &js_ref = frontObject(); //ref only,  no copy, no move
     if(js_ref == m_ring_end){// not nullptr/ring_end
       continue;
     }
@@ -136,11 +144,22 @@ uint64_t TelViewer::asyncLoop(){
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    telgl.updateTransform(cameraPos[0],   cameraPos[1],   cameraPos[2],
-                          worldCenter[0], worldCenter[1], worldCenter[2],
-                          cameraUp[0],    cameraUp[1],    cameraUp[2],
-                          60.0f,          0.1f,           2000.0f,
-                          ratio);
+
+    jsconf_trans["trans"]["lookat"]["eye"]["x"]= cameraPos[0];
+    jsconf_trans["trans"]["lookat"]["eye"]["y"]= cameraPos[1];
+    jsconf_trans["trans"]["lookat"]["eye"]["z"]= cameraPos[2];
+    jsconf_trans["trans"]["lookat"]["center"]["x"]= worldCenter[0];
+    jsconf_trans["trans"]["lookat"]["center"]["y"]= worldCenter[1];
+    jsconf_trans["trans"]["lookat"]["center"]["z"]= worldCenter[2];
+    jsconf_trans["trans"]["lookat"]["up"]["x"]= cameraUp[0];
+    jsconf_trans["trans"]["lookat"]["up"]["y"]= cameraUp[1];
+    jsconf_trans["trans"]["lookat"]["up"]["z"]= cameraUp[2];
+    jsconf_trans["trans"]["persp"]["fov"]= 60;
+    jsconf_trans["trans"]["persp"]["ratio"]= ratio;
+    jsconf_trans["trans"]["persp"]["near"]= 0.1;
+    jsconf_trans["trans"]["persp"]["far"]= 2000;
+
+    telgl.updateTransform(jsconf_trans);
 
     const JsonValue& js_data = *jssp;
     if(js_data.HasMember("tracks")){

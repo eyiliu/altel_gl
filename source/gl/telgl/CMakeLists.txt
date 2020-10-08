@@ -1,6 +1,10 @@
 add_library(altel-telgl SHARED src/TelGL.cc)
+
+set(OpenGL_GL_PREFERENCE GLVND)
+find_package(OpenGL REQUIRED)
+
 target_link_libraries(altel-telgl
-  PUBLIC GL galogen
+  PUBLIC galogen  OpenGL::GL
   PRIVATE altel-glsl mycommon
   )
 
