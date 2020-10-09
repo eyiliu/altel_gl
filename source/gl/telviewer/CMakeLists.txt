@@ -1,4 +1,4 @@
-add_library(altel-telviewer SHARED src/TelViewer.cc)
+add_library(altel-telviewer SHARED src/TelViewer.cc src/TelFW.cc)
 
 find_package(glfw3 3.3 REQUIRED)
 target_link_libraries(altel-telviewer

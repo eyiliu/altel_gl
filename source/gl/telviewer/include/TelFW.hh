@@ -21,86 +21,71 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
+#include "TelGL.hh"
 
+class GLFWwindow;
 class TelFW{
  public:
-  static  void initializeGLFW(){
-    glfwSetErrorCallback([](int error, const char* description){
-                           fprintf(stderr, "Error: %s\n", description);});
-    if (!glfwInit()){
-      throw;
-    }
-  }
+  TelFW(float sWinWidth, float sWinHeight, const std::string& title);
+  ~TelFW();
+  GLFWwindow* get();
+  int stopAsync();
 
-  static void terminateGLFW(){
-    glfwTerminate();
-  }
-
-  static  GLFWwindow* createWindow(float sWinWidth, float sWinHeight, const std::string& title=""){
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_SAMPLES, 4);
-    GLFWwindow* window = glfwCreateWindow((int)sWinWidth, (int)sWinHeight, title.c_str(), NULL, NULL);
-    if (!window){
-      glfwTerminate();
-      throw;
-    }
-    glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height){
-                                             glViewport(0, 0, width, height);});
-    return window;
-  }
-
-  static void deleteWindow(GLFWwindow* window){
-    glfwDestroyWindow(window);
-  }
-
-  
   template<typename T>
-    static std::future<int> startAsyncLoop(
-                                           GLFWwindow* window,
-                                           T* t,
-                                           std::function<void(T*)> enterLoopHook,
-                                           std::function<bool(T*, GLFWwindow*, float, float)> beforeClearHook,
-                                           std::function<void(T*)> drawHook
-                                           ){
-    return std::async(std::launch::async, &TelFW::asyncLoop<T>,
-                      window, t, enterLoopHook, beforeClearHook, drawHook);
+  bool startAsync(T* t,
+                  std::function<int(T*, GLFWwindow*)> clearHook,
+                  std::function<int(T*, GLFWwindow*)> drawHook
+                  ){
+    if(!m_fut.valid()){
+      m_fut = std::async(std::launch::async, &TelFW::loopFun<T>,
+                         this, t,  clearHook, drawHook);
+    }
+    return true;
   }
 
   template<typename T>
-    static int asyncLoop(GLFWwindow* window,
-                         T* t,
-                         std::function<void(T*)> enterLoopHook,
-                         std::function<bool(T*, GLFWwindow*, float, float)> beforeClearHook,
-                         std::function<void(T*)> drawHook
-                         ){
-    float deltaTime = 0.0f; // time between current frame and last frame
-    float lastFrame = 0.0f;
-    enterLoopHook(t);
-    while (!glfwWindowShouldClose(window)){
-      float currentFrame = glfwGetTime();
-      deltaTime = currentFrame - lastFrame;
-      lastFrame = currentFrame;
-      int width;
-      int height;
-      glfwGetFramebufferSize(window, &width, &height);
-      float currentWinRatio = width / (float) height;
+  int loopFun(T* t,
+              std::function<int(T*, GLFWwindow*)> clearHook,
+              std::function<int(T*, GLFWwindow*)> drawHook);
 
-      if(!beforeClearHook(t, window, deltaTime, currentWinRatio)) continue;
+  static void initializeGLFW();
+  static void terminateGLFW();
+  static GLFWwindow* createWindow(float sWinWidth, float sWinHeight, const std::string& title);
+  static void deleteWindow(GLFWwindow* window);
+private:
+  bool checkifclose();
+  void clear();
+  void flush();
 
-      glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-      drawHook(t);
-
-      glfwSwapBuffers(window);
-      glfwPollEvents();
-    }
-    return 0;
-  }
+private:
+  bool m_runflag;
+  std::future<int> m_fut;
+  GLFWwindow* m_win;
+  static size_t s_count;
 };
+
+
+template<typename T>
+int TelFW::loopFun(T* t,
+                   std::function<int(T*, GLFWwindow*)> clearHook,
+                   std::function<int(T*, GLFWwindow*)> drawHook){
+  m_runflag = true;
+  while (!checkifclose()){
+    std::cout<< ".";
+    int ch = clearHook(t, m_win);
+    if(ch==0) continue;
+    if(ch>0){
+    clear();
+    }
+    int dh = drawHook(t, m_win);
+    flush();// todo: split flush and poll
+  }
+  m_runflag = false;
+  std::cout<< "returned loop"<<std::endl;
+  return 0;
+}
+
+
 
 
 class TelFWTest{
@@ -112,12 +97,12 @@ public:
   glm::vec3 cameraPos;
   glm::vec3 worldCenter;
   glm::vec3 cameraUp;
+  float deltaTime = 0.0f; // time between current frame and last frame
+  float lastFrame = 0.0f;
+
   TelFWTest(const std::string& path_geometry, const std::string& path_data)
     :geometry_path(path_geometry), data_path(path_data), telgl(JsonValue())
   {
-  }
-
-  void enterLoopHook(){
     std::string jsstr_geo = altel::TelGL::readFile(geometry_path);
     JsonDocument jsd_geo;
     jsd_geo = altel::TelGL::createJsonDocument(jsstr_geo);
@@ -129,9 +114,16 @@ public:
     cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
   }
 
-  bool beforeClearHook(GLFWwindow* window, float deltaTime, float currentWinRatio){
-    if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-      return false;
+  int clearHook(GLFWwindow* window){
+    float currentFrame = glfwGetTime();
+    deltaTime = currentFrame - lastFrame;
+    lastFrame = currentFrame;
+    int width;
+    int height;
+    glfwGetFramebufferSize(window, &width, &height);
+    float currentWinRatio = width / (float) height;
+    // if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+    //   return 0;
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
       glfwSetWindowShouldClose(window, true);
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
@@ -161,10 +153,10 @@ public:
     jsd_trans["trans"]["persp"]["near"]= 0.1;
     jsd_trans["trans"]["persp"]["far"]= 2000;
     telgl.updateTransform(jsd_trans);
-    return true;
+    return 1;
   }
 
-  void drawHook(){
+  int drawHook(GLFWwindow* window){
     std::string jsstr_data = altel::TelGL::readFile(data_path);
     JsonDocument jsd_data = altel::TelGL::createJsonDocument(jsstr_data);
 
@@ -180,5 +172,7 @@ public:
     else{
       telgl.drawDetectors();
     }
+    return 1;
   }
 };
+

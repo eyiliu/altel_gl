@@ -15,7 +15,7 @@ target_link_libraries(TelFW_test PRIVATE mycommon altel-telgl glfw altel-telview
 set_target_properties(TelFW_test PROPERTIES CXX_STANDARD 17)
 
 
-install(TARGETS AltelGlExample TelGL_test
+install(TARGETS AltelGlExample TelGL_test TelFW_test
   EXPORT ${PROJECT_NAME}Targets
   RUNTIME       DESTINATION bin      COMPONENT runtime
   LIBRARY       DESTINATION lib      COMPONENT runtime

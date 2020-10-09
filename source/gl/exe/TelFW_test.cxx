@@ -36,7 +36,10 @@ Usage:
   -geometry [PATH]   path to geometry file (input)
 )";
 
+static sig_atomic_t g_done = 0;
 int main(int argc, char **argv){
+  signal(SIGINT, [](int){g_done+=1;});
+
   int do_help = false;
   int do_verbose = false;
   struct option longopts[] =
@@ -96,13 +99,15 @@ int main(int argc, char **argv){
 
   //////////////////////////////////////////
 
-  TelFW::initializeGLFW();
-  auto win = TelFW::createWindow(800, 400, "test");
+  TelFW telfw(800, 400, "test");
   TelFWTest telfwtest(geometry_path, data_path);
-  auto fut = TelFW::startAsyncLoop<TelFWTest>(win, &telfwtest, &TelFWTest::enterLoopHook, &TelFWTest::beforeClearHook, &TelFWTest::drawHook);
-  if(fut.valid())
-    fut.get();
-  TelFW::deleteWindow(win);
-  TelFW::terminateGLFW();
+
+  telfw.loopFun<TelFWTest>(&telfwtest, &TelFWTest::clearHook, &TelFWTest::drawHook );
+
+  // telfw.startAsync<TelFWTest>(&telfwtest, &TelFWTest::clearHook, &TelFWTest::drawHook);
+  // using namespace std::chrono_literals;
+  // while(!g_done){
+  //   std::this_thread::sleep_for(1s);
+  // }
   return 0;
 }
