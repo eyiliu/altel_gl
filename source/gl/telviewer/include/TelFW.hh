@@ -22,7 +22,7 @@
 #include <GLFW/glfw3.h>
 
 
-class TelFW(){
+class TelFW{
  public:
   static  void initializeGLFW(){
     glfwSetErrorCallback([](int error, const char* description){
@@ -36,7 +36,7 @@ class TelFW(){
     glfwTerminate();
   }
 
-  static  GLFWwindow* createWindow(float sWinWidth, float sWinWidth, const std::string& title=""){
+  static  GLFWwindow* createWindow(float sWinWidth, float sWinHeight, const std::string& title=""){
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -56,23 +56,26 @@ class TelFW(){
     glfwDestroyWindow(window);
   }
 
+  
   template<typename T>
     static std::future<int> startAsyncLoop(
+                                           GLFWwindow* window,
                                            T* t,
                                            std::function<void(T*)> enterLoopHook,
-                                           std::function<bool(T*, float, float)> beforeClearHook,
-                                           std::function<void(T*)> drawHook){
-    return std::async(std::launch::async, &TelFW::asyncLoop,
-                      t, enterLoopHook, beforeClearHook, drawHook);
+                                           std::function<bool(T*, GLFWwindow*, float, float)> beforeClearHook,
+                                           std::function<void(T*)> drawHook
+                                           ){
+    return std::async(std::launch::async, &TelFW::asyncLoop<T>,
+                      window, t, enterLoopHook, beforeClearHook, drawHook);
   }
 
   template<typename T>
-    static int static asyncLoop(GLFWwindow* window,
-                                T* t,
-                                std::function<void(T*)> enterLoopHook,
-                                std::function<bool(T*, float, float)> beforeClearHook,
-                                std::function<void(T*)> drawHook
-                                ){
+    static int asyncLoop(GLFWwindow* window,
+                         T* t,
+                         std::function<void(T*)> enterLoopHook,
+                         std::function<bool(T*, GLFWwindow*, float, float)> beforeClearHook,
+                         std::function<void(T*)> drawHook
+                         ){
     float deltaTime = 0.0f; // time between current frame and last frame
     float lastFrame = 0.0f;
     enterLoopHook(t);
@@ -85,7 +88,7 @@ class TelFW(){
       glfwGetFramebufferSize(window, &width, &height);
       float currentWinRatio = width / (float) height;
 
-      if(!beforeClearHook(t, deltaTime, currentWinRatio)) continue;
+      if(!beforeClearHook(t, window, deltaTime, currentWinRatio)) continue;
 
       glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -119,14 +122,14 @@ public:
     JsonDocument jsd_geo;
     jsd_geo = altel::TelGL::createJsonDocument(jsstr_geo);
     jsd_trans = altel::TelGL::createTransformExample();
-    telgl.updataGeometry(jsd_geo);
+    telgl.updateGeometry(jsd_geo);
 
     cameraPos   = glm::vec3(0.0f, 0.0f,  -1000.0f);
     worldCenter = glm::vec3(0.0f, 0.0f,  0.0f);
     cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
   }
 
-  bool beforeClearHook(float deltaTime, float currentWinRatio){
+  bool beforeClearHook(GLFWwindow* window, float deltaTime, float currentWinRatio){
     if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
       return false;
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)

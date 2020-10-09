@@ -24,6 +24,7 @@
 #include "linenoise.h"
 #include "myrapidjson.h"
 
+#include "TelFW.hh"
 
 
 
@@ -97,8 +98,8 @@ int main(int argc, char **argv){
 
   TelFW::initializeGLFW();
   auto win = TelFW::createWindow(800, 400, "test");
-  TelFWTest telfwtest(geometry_path);
-  auto fut = TelFW::startAsyncLoop(&telfwtest, TelFWTest::enterLoopHook, TelFWTest::beforeClearHook, TelFWTest::drawHook);
+  TelFWTest telfwtest(geometry_path, data_path);
+  auto fut = TelFW::startAsyncLoop<TelFWTest>(win, &telfwtest, &TelFWTest::enterLoopHook, &TelFWTest::beforeClearHook, &TelFWTest::drawHook);
   if(fut.valid())
     fut.get();
   TelFW::deleteWindow(win);

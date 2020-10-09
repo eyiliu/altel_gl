@@ -32,15 +32,6 @@ Usage:
   -geometry [PATH]   path to geometry file (input)
 )";
 
-float deltaTime = 0.0f; // time between current frame and last frame
-float lastFrame = 0.0f;
-float sWinWidth = 1000;
-float sWinHeight = 480;
-glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  -1000.0f);
-glm::vec3 worldCenter = glm::vec3(0.0f, 0.0f,  0.0f);
-glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
-
-
 int main(int argc, char **argv){
   int do_help = false;
   int do_verbose = false;
@@ -95,98 +86,114 @@ int main(int argc, char **argv){
   if(geometry_path.empty() || data_path.empty()){
     std::fprintf(stdout, "Error: input option.\n");
     std::fprintf(stdout, "%s\n", help_usage.c_str());
-    exit(1);
+    std::exit(1);
   }
 
+
+  //////////////////////////////////////////
   glfwSetErrorCallback([](int error, const char* description){
                          fprintf(stderr, "Error: %s\n", description);});
-
-  if (!glfwInit())
-    exit(EXIT_FAILURE);
+  if (!glfwInit()){
+    std::exit(1);
+  }
 
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_SAMPLES, 4);
-
+  float sWinWidth = 1000;
+  float sWinHeight = 480;
   GLFWwindow* window = glfwCreateWindow((int)sWinWidth, (int)sWinHeight, "OpenGL telescope example", NULL, NULL);
-  if (!window){ glfwTerminate(); exit(EXIT_FAILURE);}
+  if (!window){
+    glfwTerminate();
+    std::exit(0);
+  }
   glfwMakeContextCurrent(window);
-
   glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height){
-                                           sWinWidth  = width;
-                                           sWinHeight = height;
                                            glViewport(0, 0, width, height);});
+  ////^^^/////////////////////////////////
 
-  glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scancode, int action, int mods){
-                               if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS){
-                                 glfwSetWindowShouldClose(window, GLFW_TRUE);
-                               }
-                               if (key == GLFW_KEY_Q && action != GLFW_RELEASE)
-                                 cameraPos -= (cameraPos - worldCenter) * (deltaTime * 1.0f);
-                               if (key == GLFW_KEY_E && action != GLFW_RELEASE)
-                                 cameraPos += (cameraPos - worldCenter) * (deltaTime * 1.0f);
-                               //note: rotation does not work as expectation, BUT WORKS SOMEHOW
-                               if (key == GLFW_KEY_A && action != GLFW_RELEASE)
-                                 cameraPos -= glm::cross((cameraPos - worldCenter), glm::vec3(0.0f, 1.0f,  0.0f)) * (deltaTime * 2.0f);
-                               if (key == GLFW_KEY_D && action != GLFW_RELEASE)
-                                 cameraPos += glm::cross((cameraPos - worldCenter), glm::vec3(0.0f, 1.0f,  0.0f)) * (deltaTime * 2.0f);
-                               if (key == GLFW_KEY_W && action != GLFW_RELEASE)
-                                 cameraPos -= glm::cross((cameraPos - worldCenter), glm::vec3(1.0f, 0.0f,  0.0f)) * (deltaTime * 2.0f);
-                               if (key == GLFW_KEY_S && action != GLFW_RELEASE)
-                                 cameraPos += glm::cross((cameraPos - worldCenter), glm::vec3(1.0f, 0.0f,  0.0f)) * (deltaTime * 2.0f);
-                             });
-
-  /////////////////////////////////////////////
   std::string jsstr_geo = altel::TelGL::readFile(geometry_path);
-  JsonDocument jsdoc_geo = altel::TelGL::createJsonDocument(jsstr_geo);
-  altel::TelGL telgl(jsdoc_geo);
+  JsonDocument jsd_geo = altel::TelGL::createJsonDocument(jsstr_geo);
+  altel::TelGL telgl(jsd_geo);
 
-  // JsonDocument jsconf_geo = altel::TelGL::createGeometryExample();
-  // altel::TelGL::printJsonValue(jsconf_geo, true);
+  float deltaTime = 0.0f; // time between current frame and last frame
+  float lastFrame = 0.0f;
+  float lastWinRatio = sWinWidth/sWinHeight;
+  JsonDocument jsd_trans = altel::TelGL::createTransformExample();
+  glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  -1000.0f);
+  glm::vec3 worldCenter = glm::vec3(0.0f, 0.0f,  0.0f);
+  glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 
-  JsonDocument jsconf_trans = altel::TelGL::createTransformExample();
+
   while (!glfwWindowShouldClose(window)){
+    int width;
+    int height;
     float currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
+    glfwGetFramebufferSize(window, &width, &height);
+    float currentWinRatio = width / (float) height;
+    {
+      if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        continue;
+      if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+      if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+        cameraPos -= (cameraPos - worldCenter) * (deltaTime * 1.0f);
+      if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+        cameraPos += (cameraPos - worldCenter) * (deltaTime * 1.0f);
+      if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        cameraPos -= glm::cross((cameraPos - worldCenter), glm::vec3(0.0f, 1.0f,  0.0f)) * (deltaTime * 2.0f);
+      if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        cameraPos += glm::cross((cameraPos - worldCenter), glm::vec3(0.0f, 1.0f,  0.0f)) * (deltaTime * 2.0f);
+      if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        cameraPos -= glm::cross((cameraPos - worldCenter), glm::vec3(1.0f, 0.0f,  0.0f)) * (deltaTime * 2.0f);
+      if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        cameraPos += glm::cross((cameraPos - worldCenter), glm::vec3(1.0f, 0.0f,  0.0f)) * (deltaTime * 2.0f);
+
+      jsd_trans["trans"]["lookat"]["eye"]["x"]= cameraPos[0];
+      jsd_trans["trans"]["lookat"]["eye"]["y"]= cameraPos[1];
+      jsd_trans["trans"]["lookat"]["eye"]["z"]= cameraPos[2];
+      jsd_trans["trans"]["lookat"]["center"]["x"]= worldCenter[0];
+      jsd_trans["trans"]["lookat"]["center"]["y"]= worldCenter[1];
+      jsd_trans["trans"]["lookat"]["center"]["z"]= worldCenter[2];
+      jsd_trans["trans"]["lookat"]["up"]["x"]= cameraUp[0];
+      jsd_trans["trans"]["lookat"]["up"]["y"]= cameraUp[1];
+      jsd_trans["trans"]["lookat"]["up"]["z"]= cameraUp[2];
+      jsd_trans["trans"]["persp"]["fov"]= 60;
+      jsd_trans["trans"]["persp"]["ratio"]= currentWinRatio;
+      jsd_trans["trans"]["persp"]["near"]= 0.1;
+      jsd_trans["trans"]["persp"]["far"]= 2000;
+      telgl.updateTransform(jsd_trans);
+    }
 
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    jsconf_trans["trans"]["lookat"]["eye"]["x"]= cameraPos[0];
-    jsconf_trans["trans"]["lookat"]["eye"]["y"]= cameraPos[1];
-    jsconf_trans["trans"]["lookat"]["eye"]["z"]= cameraPos[2];
-    jsconf_trans["trans"]["lookat"]["center"]["x"]= worldCenter[0];
-    jsconf_trans["trans"]["lookat"]["center"]["y"]= worldCenter[1];
-    jsconf_trans["trans"]["lookat"]["center"]["z"]= worldCenter[2];
-    jsconf_trans["trans"]["lookat"]["up"]["x"]= cameraUp[0];
-    jsconf_trans["trans"]["lookat"]["up"]["y"]= cameraUp[1];
-    jsconf_trans["trans"]["lookat"]["up"]["z"]= cameraUp[2];
-    jsconf_trans["trans"]["persp"]["fov"]= 60;
-    jsconf_trans["trans"]["persp"]["ratio"]= sWinWidth / sWinHeight;
-    jsconf_trans["trans"]["persp"]["near"]= 0.1;
-    jsconf_trans["trans"]["persp"]["far"]= 2000;
+    {
+      std::string jsstr_data = altel::TelGL::readFile(data_path);
+      JsonDocument jsd_data = altel::TelGL::createJsonDocument(jsstr_data);
 
-    telgl.updateTransform(jsconf_trans);
+      if(jsd_data.HasMember("tracks")){
+        telgl.drawTracks(jsd_data);
+      }
+      if(jsd_data.HasMember("hits")){
+        telgl.drawHits(jsd_data);
+      }
+      if(jsd_data.HasMember("detectors")){
+        telgl.drawDetectors(jsd_data);
+      }
+      else{
+        telgl.drawDetectors();
+      }
+    }
 
-    std::string jsstr_data = altel::TelGL::readFile(data_path);
-    JsonDocument jsdoc_data = altel::TelGL::createJsonDocument(jsstr_data);
-    if(jsdoc_data.HasMember("tracks")){
-      telgl.drawTracks(jsdoc_data);
-    }
-    if(jsdoc_data.HasMember("hits")){
-      telgl.drawHits(jsdoc_data);
-    }
-    if(jsdoc_data.HasMember("detectors")){
-      telgl.drawDetectors(jsdoc_data);
-    }
-    else{
-      telgl.drawDetectors();
-    }
     glfwSwapBuffers(window);
     glfwPollEvents();
+    lastWinRatio=currentWinRatio;
   }
+
   glfwDestroyWindow(window);
   glfwTerminate();
   exit(EXIT_SUCCESS);
