@@ -2,24 +2,17 @@
 
 size_t TelFW::s_count = 0;
 
-TelFW::TelFW(float sWinWidth, float sWinHeight, const std::string& title){
-  if(!s_count){
-    initializeGLFW();
-  }
-  m_win = createWindow(sWinWidth, sWinHeight, title);
-  s_count++;
+TelFW::TelFW(float sWinWidth, float sWinHeight, const std::string& title)
+  :m_width(sWinWidth), m_height(sWinHeight), m_title(title){
 }
 
 TelFW::~TelFW(){
   stopAsync();
-  deleteWindow(m_win);
-  s_count--;
 }
 
 GLFWwindow* TelFW::get(){
   return m_win;
 }
-
 
 int TelFW::stopAsync(){
   m_runflag = false;
@@ -44,7 +37,6 @@ void TelFW::flush(){
 }
 
 void TelFW::initializeGLFW(){
-  std::cout<< "init glfw"<<std::endl;
   glfwSetErrorCallback([](int error, const char* description){
                          fprintf(stderr, "Error: %s\n", description);});
   if (!glfwInit()){
@@ -75,5 +67,3 @@ GLFWwindow* TelFW::createWindow(float sWinWidth, float sWinHeight, const std::st
 void TelFW::deleteWindow(GLFWwindow* window){
   glfwDestroyWindow(window);
 }
-
-

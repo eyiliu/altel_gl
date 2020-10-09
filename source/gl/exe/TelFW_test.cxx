@@ -25,6 +25,7 @@
 #include "myrapidjson.h"
 
 #include "TelFW.hh"
+#include "TelFWTest.hh"
 
 
 
@@ -102,12 +103,13 @@ int main(int argc, char **argv){
   TelFW telfw(800, 400, "test");
   TelFWTest telfwtest(geometry_path, data_path);
 
-  telfw.loopFun<TelFWTest>(&telfwtest, &TelFWTest::clearHook, &TelFWTest::drawHook );
-
-  // telfw.startAsync<TelFWTest>(&telfwtest, &TelFWTest::clearHook, &TelFWTest::drawHook);
-  // using namespace std::chrono_literals;
-  // while(!g_done){
-  //   std::this_thread::sleep_for(1s);
-  // }
+  telfw.startAsync<TelFWTest>(&telfwtest, &TelFWTest::beginHook, &TelFWTest::clearHook, &TelFWTest::drawHook);
+  
+  using namespace std::chrono_literals;
+  while(!g_done){
+    std::this_thread::sleep_for(1s);
+  }
+  telfw.stopAsync();
+  
   return 0;
 }
