@@ -299,9 +299,15 @@ void TelGL::updateGeometry(const JsonValue& js){
     double sy = js_det["size"]["y"].GetDouble();
     double sz = js_det["size"]["z"].GetDouble();
 
-    double colorR = js_det["color"]["r"].GetDouble();
-    double colorG = js_det["color"]["g"].GetDouble();;
-    double colorB = js_det["color"]["b"].GetDouble();;
+    double colorR = 0;
+    double colorG = 0;
+    double colorB = 1.0;
+
+    if(js_det.HasMember("color")){
+      double colorR = js_det["color"]["r"].GetDouble();
+      double colorG = js_det["color"]["g"].GetDouble();
+      double colorB = js_det["color"]["b"].GetDouble();
+    }
 
     m_data_tel_id[n] = id; //
     m_data_geo[n].id[0] = id;
