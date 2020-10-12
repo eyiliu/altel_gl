@@ -15,12 +15,6 @@
 
 #include <unistd.h>
 
-#include "myrapidjson.h"
-
-#include "gl.h"
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
-
 #include "TelGL.hh"
 
 class GLFWwindow;
@@ -52,6 +46,8 @@ class TelFW{
   static void terminateGLFW();
   static GLFWwindow* createWindow(float sWinWidth, float sWinHeight, const std::string& title);
   static void deleteWindow(GLFWwindow* window);
+  // static getFramebufferSize(GLFWwindow* window, int* width,  int* height);
+  // static getKey(GLFWwindow* window, int);
 private:
   bool checkifclose();
   void clear();

@@ -1,4 +1,10 @@
 #include "TelFW.hh"
+#include "myrapidjson.h"
+
+#include "gl.h"
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
+
 
 class TelFWTest{
 public:

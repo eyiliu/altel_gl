@@ -21,7 +21,6 @@ create_cpp_raw_string(${CMAKE_CURRENT_BINARY_DIR}/include/TelFragment_glsl.hh Te
 create_cpp_raw_string(${CMAKE_CURRENT_BINARY_DIR}/include/HitVertex_glsl.hh HitVertex.glsl)
 create_cpp_raw_string(${CMAKE_CURRENT_BINARY_DIR}/include/HitGeometry_glsl.hh HitGeometry.glsl)
 create_cpp_raw_string(${CMAKE_CURRENT_BINARY_DIR}/include/TrackVertex_glsl.hh TrackVertex.glsl)
-create_cpp_raw_string(${CMAKE_CURRENT_BINARY_DIR}/include/TrackGeometry_glsl.hh TrackGeometry.glsl)
 
 add_library(altel-glsl INTERFACE)
 target_include_directories(altel-glsl

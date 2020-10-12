@@ -1,5 +1,12 @@
 #include "TelFW.hh"
 
+#include "myrapidjson.h"
+
+#include "gl.h"
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
+
+
 size_t TelFW::s_count = 0;
 
 TelFW::TelFW(float sWinWidth, float sWinHeight, const std::string& title)
