@@ -104,7 +104,6 @@ int main(int argc, char **argv){
   TelFWTest telfwtest(geometry_path, data_path);
 
   telfw.startAsync<TelFWTest>(&telfwtest, &TelFWTest::beginHook, &TelFWTest::clearHook, &TelFWTest::drawHook);
-  
   using namespace std::chrono_literals;
   while(!g_done){
     std::this_thread::sleep_for(1s);
