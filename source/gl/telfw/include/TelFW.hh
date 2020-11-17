@@ -76,7 +76,7 @@ int TelFW::loopFun(T* t,
 
   beginHook(t, m_win);
   while (!checkifclose()){
-    std::cout<< ".";
+    // std::cout<< ".";
     int ch = clearHook(t, m_win);
     if(ch==0) continue;
     if(ch>0){

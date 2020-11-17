@@ -11,7 +11,6 @@ set_target_properties(TelFW_test PROPERTIES CXX_STANDARD 17)
 
 
 install(TARGETS TelGL_test TelFW_test
-  EXPORT ${PROJECT_NAME}Targets
   RUNTIME       DESTINATION bin      COMPONENT runtime
   LIBRARY       DESTINATION lib      COMPONENT runtime
   ARCHIVE       DESTINATION lib      COMPONENT devel

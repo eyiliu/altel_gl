@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
-project(altel_altel VERSION 1.0.0 LANGUAGES CXX)
+project(altel_gl VERSION 1.0.0 LANGUAGES CXX)
 
 message(STATUS "CMAKE_ROOT:                  ${CMAKE_ROOT}")
 message(STATUS "CMAKE_VERSION:               ${CMAKE_VERSION}")
@@ -20,8 +20,8 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-set(CMAKE_CXX_STANDARD 14)
-set_property(GLOBAL PROPERTY CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 
